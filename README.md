@@ -1,7 +1,9 @@
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/matlib)](http://cran.r-project.org/package=matlib)
+
 # matlib
 Matrix Functions for Teaching and Learning Linear Algebra and Multivariate Statistics
 
-Version 0.4.1
+Version 0.5.1
 
 These functions are mainly for tutorial purposes in learning matrix algebra
 ideas using R. In some cases, functions are provided for concepts available
@@ -10,7 +12,11 @@ cases, functions are provided to show or demonstrate an algorithm.
 
 ## Installation
 
-This package can be installed to your R library directly from this repo via
+Get the released version from CRAN:
+
+     install.packages("matlib")
+
+The development version can be installed to your R library directly from this repo via:
 
      if (!require(devtools)) install.packages("devtools")
      library(devtools)
@@ -21,11 +27,12 @@ R Tools installed on your system.  [R Tools for Windows](https://cran.r-project.
 takes you to the download page for Windows.  [R Tools for Mac OS X](https://cran.r-project.org/bin/macosx/tools/)
 has the required programs for Mac OS X.
 
-
 Alternatively, a Windows binary (not always current) is available at http://www.psych.yorku.ca/lab/psy6140/R/matlib.zip
 and can be installed via
 
     install.packages("http://www.psych.yorku.ca/lab/psy6140/R/matlib.zip", repos=NULL)
+
+This will usually be more current than the CRAN version, but less current than the GitHub version.
 
 ## Contents
 
@@ -33,8 +40,10 @@ and can be installed via
 
   - `tr()` - trace of a matrix
   - `R()` - rank of a matrix
-  - `proj(y, X)` - projection of vector y on colunms of X
+  - `len()` - Euclidean length of a vector or columns of a matrix
+  - `Proj(y, X)` - projection of vector y on colunms of X
   - `mpower(A, p)` - matrix powers for a square symmetric matrix
+  - `vectors()` - plot geometric vectors
 
 2. Determinants: functions for calculating determinants by cofactor expansion
 
@@ -49,16 +58,16 @@ and can be installed via
   - `rowmult()` - Multiply rows by constants
   - `rowswap()` - Interchange two rows of a matrix
 
-4. Linear equations: functions to illustrate linear equations of the form **$A x = b$**
+4. Linear equations: functions to illustrate linear equations of the form $\mathbf{A x = b}$
 
   - `showEqn(A, b)` - show matrices (A, b) as linear equations
-  - `plotEqn(A, b)` - plot matrices (A, b) as linear equations
+  - `plotEqn(A, b)`, `plotEqn3d(A, b)`  - plot matrices (A, b) as linear equations
   
 5. Gaussian elimination: functions for illustrating Gaussian elimination for solving systems of linear equations of the form
-**$A x = b$**.  These functions provide a `verbose=TRUE` argument to show the intermediate steps.
+$\mathbf{A x = b}$.  These functions provide a `verbose=TRUE` argument to show the intermediate steps.
 
   - `gaussianElimination(A, B)` - reduces (A, B) to (I, A^{-1} B)
-  - `Inverse(X)` - uses `gaussianElimination` to find the inverse of X
+  - `Inverse(X)`, `inv()` - uses `gaussianElimination` to find the inverse of X
   - `echelon(X)` - uses `gaussianElimination` to find the reduced echelon form of X
   - `Ginv(X)` - uses `gaussianElimination` to find the generalized inverse of X
   - `cholesky()` - calculates a Cholesky square root of a matrix
