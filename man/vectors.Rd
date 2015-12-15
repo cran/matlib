@@ -2,7 +2,7 @@
 % Please edit documentation in R/vectors.R
 \name{vectors}
 \alias{vectors}
-\title{Draw Geometric Vectors}
+\title{Draw geometric vectors in 2D}
 \usage{
 vectors(X, origin = c(0, 0), lwd = 2, angle = 10, length = 0.15,
   labels = TRUE, cex.lab = 1.5, pos.lab = 4, frac.lab = 1, ...)
@@ -35,7 +35,8 @@ Values \code{frac.lab > 1} locate the label beyond the end of the vector.}
 none
 }
 \description{
-This function draws vectors in a 2D plot, in a way that facilitates constructing vector diagrams.
+This function draws vectors in a 2D plot, in a way that facilitates constructing vector diagrams. It allows vectors to be
+specified as rows of a matrix, and can draw labels on the vectors.
 }
 \examples{
 # shows addition of vectors
@@ -57,8 +58,13 @@ vectors(sum, origin=v, col="blue", lty=2)
 # projection of vectors
 vectors(Proj(v,u), labels="P(v,u)", lwd=3)
 vectors(v, origin=Proj(v,u))
+corner(c(0,0), Proj(v,u), v, col="grey")
 }
 \seealso{
 \code{\link[graphics]{arrows}}, code{\link[graphics]{text}}
+
+Other vector diagrams: \code{\link{Proj}},
+  \code{\link{arrows3d}}, \code{\link{corner}},
+  \code{\link{point_on_line}}, \code{\link{vectors3d}}
 }
 

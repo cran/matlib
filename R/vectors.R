@@ -1,6 +1,7 @@
-#' Draw Geometric Vectors
+#' Draw geometric vectors in 2D
 #'
-#' This function draws vectors in a 2D plot, in a way that facilitates constructing vector diagrams.
+#' This function draws vectors in a 2D plot, in a way that facilitates constructing vector diagrams. It allows vectors to be
+#' specified as rows of a matrix, and can draw labels on the vectors.
 #'
 #' @param X a vector or two-column matrix representing a set of geometric vectors; if a matrix, one vector is drawn for each row
 #' @param origin the origin from which they are drawn, a vector of length 2.
@@ -18,6 +19,7 @@
 #'
 #' @return none
 #' @seealso \code{\link[graphics]{arrows}}, code{\link[graphics]{text}}
+#' @family vector diagrams
 #' @importFrom graphics arrows
 #'
 #' @examples
@@ -40,6 +42,7 @@
 #' # projection of vectors
 #' vectors(Proj(v,u), labels="P(v,u)", lwd=3)
 #' vectors(v, origin=Proj(v,u))
+#' corner(c(0,0), Proj(v,u), v, col="grey")
 
 vectors <- function(X, origin=c(0,0),
                     lwd=2, angle=10, length=0.15,

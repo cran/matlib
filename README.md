@@ -3,12 +3,12 @@
 # matlib
 Matrix Functions for Teaching and Learning Linear Algebra and Multivariate Statistics
 
-Version 0.5.2
+Version 0.6.0
 
 These functions are mainly for tutorial purposes in learning matrix algebra
 ideas using R. In some cases, functions are provided for concepts available
 elsewhere in R, but where the function call or name is not obvious.  In other
-cases, functions are provided to show or demonstrate an algorithm.
+cases, functions are provided to show or demonstrate an algorithm.  
 
 ## Installation
 
@@ -27,23 +27,18 @@ R Tools installed on your system.  [R Tools for Windows](https://cran.r-project.
 takes you to the download page for Windows.  [R Tools for Mac OS X](https://cran.r-project.org/bin/macosx/tools/)
 has the required programs for Mac OS X.
 
-Alternatively, a Windows binary (not always current) is available at http://www.psych.yorku.ca/lab/psy6140/R/matlib.zip
-and can be installed via
 
-    install.packages("http://www.psych.yorku.ca/lab/psy6140/R/matlib.zip", repos=NULL)
-
-This will usually be more current than the CRAN version, but less current than the GitHub version.
-
-## Contents
+## Topics
+The functions in this package are grouped under the following topics
 
 1. Convenience functions:  
 
   - `tr()` - trace of a matrix
   - `R()` - rank of a matrix
   - `len()` - Euclidean length of a vector or columns of a matrix
+  - `vec()` - vectorize a matrix
   - `Proj(y, X)` - projection of vector y on colunms of X
   - `mpower(A, p)` - matrix powers for a square symmetric matrix
-  - `vectors()` - plot geometric vectors
 
 2. Determinants: functions for calculating determinants by cofactor expansion
 
@@ -73,10 +68,18 @@ $\mathbf{A x = b}$.  These functions provide a `verbose=TRUE` argument to show t
   - `cholesky()` - calculates a Cholesky square root of a matrix
   - `swp()` - matrix sweep operator
 
-6. Eigenvalues -- functions to illustrate the algorithms for calculating eigenvalues and eigenvectors
+6. Eigenvalues: functions to illustrate the algorithms for calculating eigenvalues and eigenvectors
 
   - `eig()` - eigenvalues and eigenvectors
   - `SVD()` - singular value decomposition
+  - `power_method()` - find dominant eigenvector using the power method 
+
+7. Vector diagrams: functions for drawing vector diagrams in 2D and 3D
+
+  - `arrows3d()` - draw nice 3D arrows
+  - `corner()` -  draw a corner showing the angle between two vectors
+  - `point_on_line()` - position of a point along a line
+  - `vectors()`, `vectors3d()` - plot geometric vector diagrams 
 
 ### Vignettes
 
