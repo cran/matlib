@@ -4,8 +4,9 @@
 \alias{vectors3d}
 \title{Draw 3D vectors}
 \usage{
-vectors3d(X, origin = c(0, 0, 0), headlength = 0.05, labels = TRUE,
-  cex.lab = 1.2, adj.lab = 0.5, frac.lab = 1.1, ...)
+vectors3d(X, origin = c(0, 0, 0), headlength = 0.035, ref.length = NULL,
+  radius = 1/60, labels = TRUE, cex.lab = 1.2, adj.lab = 0.5,
+  frac.lab = 1.1, ...)
 }
 \arguments{
 \item{X}{a vector or three-column matrix representing a set of geometric vectors; if a matrix, one vector is drawn for each row}
@@ -13,6 +14,11 @@ vectors3d(X, origin = c(0, 0, 0), headlength = 0.05, labels = TRUE,
 \item{origin}{the origin from which they are drawn, a vector of length 3.}
 
 \item{headlength}{the \code{headlength} argument passed to \code{\link{arrows3d}} determining the length of arrow heads}
+
+\item{ref.length}{vector length to be used in scalling arrow heads so that they are all the same size; if \code{NULL}
+the longest vector is used to scale the arrow heads}
+
+\item{radius}{radius of the base of the arrow heads}
 
 \item{labels}{a logical or a character vector of labels for the vectors. If \code{TRUE} and \code{X} is a matrix,
 labels are taken from \code{rownames(X)}. If \code{NULL}, no labels are drawn.}
@@ -28,7 +34,7 @@ Values \code{frac.lab > 1} locate the label beyond the end of the vector.}
 \item{...}{other arguments passed on to graphics functions.}
 }
 \value{
-none
+invisibly returns the vector \code{ref.length} used to scale arrow heads
 }
 \description{
 This function draws vectors in a 3D plot, in a way that facilitates constructing vector diagrams. It allows vectors to be
@@ -36,31 +42,43 @@ specified as rows of a matrix, and can draw labels on the vectors.
 }
 \section{Bugs}{
 
-At present, the color (\code{col=}) argument is not handled as expected.
+At present, the color (\code{color=}) argument is not handled as expected when more than one vector is to be drawn.
 }
 \examples{
 vec <- rbind(diag(3), c(1,1,1))
 rownames(vec) <- c("X", "Y", "Z", "J")
 library(rgl)
 open3d()
-vectors3d(vec, col=c(rep("black",3), "red"), lwd=2)
+vectors3d(vec, color=c(rep("black",3), "red"), lwd=2)
 # draw the XZ plane, whose equation is Y=0
 planes3d(0, 0, 1, 0, col="gray", alpha=0.2)
+vectors3d(c(1,1,0), col="green", lwd=2)
 # show projections of the unit vector J
-segments3d(v1 <- rbind(c(1,1,1), c(1, 1, 0)))
-segments3d(v2 <- rbind(c(0,0,0), c(1, 1, 0)))
-segments3d(v3 <- rbind(c(1,0,0), c(1, 1, 0)))
-segments3d(v4 <- rbind(c(0,1,0), c(1, 1, 0)))
+segments3d(rbind(c(1,1,1), c(1, 1, 0)))
+segments3d(rbind(c(0,0,0), c(1, 1, 0)))
+segments3d(rbind(c(1,0,0), c(1, 1, 0)))
+segments3d(rbind(c(0,1,0), c(1, 1, 0)))
+# show some orthogonal vectors
+p1 <- c(0,0,0)
+p2 <- c(1,1,0)
+p3 <- c(1,1,1)
+p4 <- c(1,0,0)
+corner(p1, p2, p3, col="red")
+corner(p1, p4, p2, col="red")
+corner(p1, p4, p3, col="blue")
+
 rgl.bringtotop()
 }
 \author{
 Michael Friendly
 }
 \seealso{
-\code{\link{arrows3d}}, code{\link[rgl]{texts3d}}
+\code{\link{arrows3d}}, code{\link[rgl]{texts3d}}, code{\link[rgl]{rgl.material}}
 
 Other vector diagrams: \code{\link{Proj}},
-  \code{\link{arrows3d}}, \code{\link{corner}},
-  \code{\link{point_on_line}}, \code{\link{vectors}}
+  \code{\link{arc}}, \code{\link{arrows3d}},
+  \code{\link{corner}}, \code{\link{plot.regvec3d}},
+  \code{\link{point_on_line}}, \code{\link{regvec3d}},
+  \code{\link{vectors}}
 }
 

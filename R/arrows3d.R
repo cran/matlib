@@ -56,7 +56,7 @@
 #' @param ...    rgl arguments passed down; see \code{\link[rgl]{rgl.material}}
 #'
 #' @return       returns the integer object ID of the shape that was added to the scene
-#' @author       January Weiner, borrowed from from \code{\link[pca3d]{pca3d}}
+#' @author       January Weiner, borrowed from from the \pkg{pca3d} package
 #' @export
 #' @import rgl
 #' @seealso \code{\link{arrows3d}}
@@ -65,9 +65,9 @@
 #' # none yet
 
 cone3d <- function( base, tip, radius= 10, col= "grey", scale= NULL, ... ) {
-  start <- rep( 0, 3 )
+#  start <- rep( 0, 3 )
 
-  if( missing( scale ) ) scale= 1 # was: rep( 1, 0 )
+  if( missing( scale ) ) scale <- 1 # was: rep( 1, 0 )
   else scale <- max( scale ) / scale
 
 
@@ -99,40 +99,50 @@ cone3d <- function( base, tip, radius= 10, col= "grey", scale= NULL, ... ) {
 #' @param coords     A 2n x 3 matrix giving the start and end (x,y,z) coordinates of n arrows, in pairs.  The first vector
 #'                   in each pair is taken as the starting coordinates of the arrow, the second as the end coordinates.
 #' @param headlength Length of the arrow heads, in device units
-#' @param head       Position of the arrow head. Only "end" is presently implemented.
-#' @param scale      scale factor for base and tip of arrow head
+#' @param head       Position of the arrow head. Only \code{head="end"} is presently implemented.
+#' @param scale      Scale factor for base and tip of arrow head, a vector of length 3, giving relative scale factors for X, Y, Z
 #' @param radius     radius of the base of the arrow head
-#' @param ...        rgl arguments passed down to \code{\link[rgl]{segments3d}} and \code{cone3d}
+#' @param ref.length length of vector to be used to scale all of the arrow heads (permits drawing arrow heads of the same size as in a previous call);
+#'                   if \code{NULL}, arrows are scaled relative to the longest vector
+#' @param ...        rgl arguments passed down to \code{\link[rgl]{segments3d}} and \code{cone3d}, for example, \code{col} and \code{lwd}
 #'
-#' @return           none
-#' @author           January Weiner, borrowed from \code{\link[pca3d]{pca3d}}
+#' @return           invisibly returns the length of the vector used to scale the arrow heads
+#' @author           January Weiner, borrowed from the \pkg{pca3d} package, slightly modified by John Fox
 #' @seealso          \code{\link{vectors3d}}
 #' @family vector diagrams
 #' @export
 #'
 #' @examples
-#' # none yet
-arrows3d <- function( coords, headlength= 0.035, head= "end", scale= NULL, radius = NULL, ... ) {
+#'  #none yet
+arrows3d <- function( coords, headlength= 0.035, head= "end", scale= NULL, radius = NULL,
+                      ref.length=NULL, ... ) {
 
   head <- match.arg( head, c( "start", "end", "both" ) )
+  # FIXME:  check whether coords is a matrix of 3 cols, and an even # of rows
   narr <- nrow( coords ) / 2
   n    <- nrow( coords )
 
-  starts <- coords[ seq( 1, n, by= 2 ), ]
-  ends   <- coords[ seq( 2, n, by= 2 ), ]
+  starts <- coords[ seq( 1, n, by= 2 ), , drop=FALSE]
+  ends   <- coords[ seq( 2, n, by= 2 ), , drop=FALSE]
   if( missing( radius ) ) radius <- ( max( coords ) - min( coords ) ) / 50
+
+  lengths <- sqrt(rowSums(ends - starts)^2)
+
+  if (is.null(ref.length)){
+    ref.length <- max(lengths)
+  }
 
   segments3d( coords, ... )
   if( head == "end" | head == "both" ) {
     for( i in 1:narr ) {
       s <- starts[i,]
       e <- ends[i,]
-      base <- e - ( e - s ) * headlength
-      tip  <- ( e - s ) * headlength
+      base <- e - ( e - s ) * headlength * ref.length/lengths[i]
+      tip  <- ( e - s ) * headlength * ref.length/lengths[i]
       cone3d( base, tip, radius= radius, scale= scale, ... )
     }
   }
-
+  invisible(c(ref.length=ref.length))
 }
 
 .show.axes <- function(axes.color, ranges) {

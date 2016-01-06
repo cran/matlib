@@ -3,12 +3,13 @@
 # matlib
 Matrix Functions for Teaching and Learning Linear Algebra and Multivariate Statistics
 
-Version 0.6.0
+Version 0.7.0
 
 These functions are mainly for tutorial purposes in learning matrix algebra
 ideas using R. In some cases, functions are provided for concepts available
 elsewhere in R, but where the function call or name is not obvious.  In other
-cases, functions are provided to show or demonstrate an algorithm.  
+cases, functions are provided to show or demonstrate an algorithm.  In addition, 
+a collection of functions are provided for drawing vector diagrams in 2D and 3D.
 
 ## Installation
 
@@ -77,9 +78,10 @@ $\mathbf{A x = b}$.  These functions provide a `verbose=TRUE` argument to show t
 7. Vector diagrams: functions for drawing vector diagrams in 2D and 3D
 
   - `arrows3d()` - draw nice 3D arrows
-  - `corner()` -  draw a corner showing the angle between two vectors
+  - `corner()`, `arc()` -  draw a corner or arc showing the angle between two vectors in 2D/3D
   - `point_on_line()` - position of a point along a line
-  - `vectors()`, `vectors3d()` - plot geometric vector diagrams 
+  - `vectors()`, `vectors3d()` - plot geometric vector diagrams in 2D/3D 
+  - `regvec3d()` - calculate and plot vectors representing a bivariate regression model, `lm(y ~ x1 + x2)` in mean-deviation form.
 
 ### Vignettes
 

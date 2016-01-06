@@ -16,9 +16,10 @@ corner(p1, p2, p3, d = 0.1, absolute = TRUE, ...)
 \item{d}{The distance from \code{p2} along each vector for drawing their corner}
 
 \item{absolute}{logical; if \code{TRUE}, \code{d} is taken as an absolute distance along the vectors; otherwise it
-is calculated as a relative distance, i.e., a fraction of the length of the vectors.}
+is calculated as a relative distance, i.e., a fraction of the length of the vectors.
+See \code{\link{point_on_line}} for the precise definition.}
 
-\item{...}{Arguments passed to \code{link[graphics]{lines}} or to}
+\item{...}{Arguments passed to \code{link[graphics]{lines}} or to \code{link[rgl]{lines3d}}}
 }
 \value{
 none
@@ -36,7 +37,9 @@ a line from \code{p1} to \code{p2}, and another line from \code{p2} to \code{p3}
 }
 \seealso{
 Other vector diagrams: \code{\link{Proj}},
-  \code{\link{arrows3d}}, \code{\link{point_on_line}},
-  \code{\link{vectors3d}}, \code{\link{vectors}}
+  \code{\link{arc}}, \code{\link{arrows3d}},
+  \code{\link{plot.regvec3d}}, \code{\link{point_on_line}},
+  \code{\link{regvec3d}}, \code{\link{vectors3d}},
+  \code{\link{vectors}}
 }
 

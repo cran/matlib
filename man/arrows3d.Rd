@@ -5,7 +5,7 @@
 \title{Draw 3D arrows}
 \usage{
 arrows3d(coords, headlength = 0.035, head = "end", scale = NULL,
-  radius = NULL, ...)
+  radius = NULL, ref.length = NULL, ...)
 }
 \arguments{
 \item{coords}{A 2n x 3 matrix giving the start and end (x,y,z) coordinates of n arrows, in pairs.  The first vector
@@ -13,16 +13,19 @@ in each pair is taken as the starting coordinates of the arrow, the second as th
 
 \item{headlength}{Length of the arrow heads, in device units}
 
-\item{head}{Position of the arrow head. Only "end" is presently implemented.}
+\item{head}{Position of the arrow head. Only \code{head="end"} is presently implemented.}
 
-\item{scale}{scale factor for base and tip of arrow head}
+\item{scale}{Scale factor for base and tip of arrow head, a vector of length 3, giving relative scale factors for X, Y, Z}
 
 \item{radius}{radius of the base of the arrow head}
 
-\item{...}{rgl arguments passed down to \code{\link[rgl]{segments3d}} and \code{cone3d}}
+\item{ref.length}{length of vector to be used to scale all of the arrow heads (permits drawing arrow heads of the same size as in a previous call);
+if \code{NULL}, arrows are scaled relative to the longest vector}
+
+\item{...}{rgl arguments passed down to \code{\link[rgl]{segments3d}} and \code{cone3d}, for example, \code{col} and \code{lwd}}
 }
 \value{
-none
+invisibly returns the length of the vector used to scale the arrow heads
 }
 \description{
 Draws nice 3D arrows with \code{cone3d}s at their tips.
@@ -33,16 +36,18 @@ This function is meant to be analogous to \code{\link[graphics]{arrows}}, but fo
 3D cone. The units of these are all in terms of the ranges of the current rgl 3D scene.
 }
 \examples{
-# none yet
+ #none yet
 }
 \author{
-January Weiner, borrowed from \code{\link[pca3d]{pca3d}}
+January Weiner, borrowed from the \pkg{pca3d} package, slightly modified by John Fox
 }
 \seealso{
 \code{\link{vectors3d}}
 
 Other vector diagrams: \code{\link{Proj}},
-  \code{\link{corner}}, \code{\link{point_on_line}},
-  \code{\link{vectors3d}}, \code{\link{vectors}}
+  \code{\link{arc}}, \code{\link{corner}},
+  \code{\link{plot.regvec3d}}, \code{\link{point_on_line}},
+  \code{\link{regvec3d}}, \code{\link{vectors3d}},
+  \code{\link{vectors}}
 }
 

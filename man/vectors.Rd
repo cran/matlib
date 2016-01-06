@@ -4,7 +4,7 @@
 \alias{vectors}
 \title{Draw geometric vectors in 2D}
 \usage{
-vectors(X, origin = c(0, 0), lwd = 2, angle = 10, length = 0.15,
+vectors(X, origin = c(0, 0), lwd = 2, angle = 13, length = 0.15,
   labels = TRUE, cex.lab = 1.5, pos.lab = 4, frac.lab = 1, ...)
 }
 \arguments{
@@ -64,7 +64,9 @@ corner(c(0,0), Proj(v,u), v, col="grey")
 \code{\link[graphics]{arrows}}, code{\link[graphics]{text}}
 
 Other vector diagrams: \code{\link{Proj}},
-  \code{\link{arrows3d}}, \code{\link{corner}},
-  \code{\link{point_on_line}}, \code{\link{vectors3d}}
+  \code{\link{arc}}, \code{\link{arrows3d}},
+  \code{\link{corner}}, \code{\link{plot.regvec3d}},
+  \code{\link{point_on_line}}, \code{\link{regvec3d}},
+  \code{\link{vectors3d}}
 }
 
