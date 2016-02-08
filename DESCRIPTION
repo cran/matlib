@@ -2,8 +2,8 @@ Package: matlib
 Type: Package
 Title: Matrix Functions for Teaching and Learning Linear Algebra and
         Multivariate Statistics
-Version: 0.7.0
-Date: 2016-01-06
+Version: 0.7.2
+Date: 2016-02-17
 Authors@R: c(person(given = "Michael", family = "Friendly", role=c("aut", "cre"), email="friendly@yorku.ca"),
             person(given = "John", family = "Fox", role="aut"),
             person(given = "Georges", family = "Monette", role="ctb"),
@@ -27,6 +27,6 @@ Imports: rgl
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2016-01-06 17:18:06 UTC; Friendly
+Packaged: 2016-02-08 13:39:52 UTC; Friendly
 Repository: CRAN
-Date/Publication: 2016-01-06 20:29:36
+Date/Publication: 2016-02-08 15:39:36

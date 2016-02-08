@@ -1,10 +1,10 @@
-553fa204a5014a7c35498add87a712d5 *DESCRIPTION
-f53bac8806869a5b63e1dfea1dbd3880 *NAMESPACE
-fa359cd8c2996c77300b8495f006caef *NEWS
+d90ecd93bd37ed91783a5887c4aa4921 *DESCRIPTION
+06b9ca9c9d9a06c0c19872a0a7c7b687 *NAMESPACE
+e883e6bcd39891eb199ed3ceb31ea384 *NEWS
 783ecb74eaca85ed96e10544502b039d *R/QR.R
 f13de54644b965a19c442d655603a86f *R/R.R
 48c1d0cbc4b850221a6490b2fb7bea60 *R/arrows3d.R
-d25a682fe0552a72c744699273ea0c0a *R/corner.R
+c056daa6b7067e20cc83ed65e9660077 *R/corner.R
 c3e2e6894b15830d261324e3d313751c *R/determinants.R
 9f35d6b5fd5dd49ba39e3194d81852f6 *R/eig.R
 e2a3ef8c73df487d67bbcd4ab9e8ebf8 *R/gaussian-elimination.R
@@ -16,7 +16,7 @@ e5febc9d3371bcf71772a436d09dbc41 *R/mpower.R
 c649626dc7fe885d94bacdc9d0c481eb *R/plotEqn.R
 de91c3393a7d8479f31981a3ad54694d *R/power_method.R
 ee30034afaf7d64c06e677b275780f80 *R/proj.R
-0048d1c374cfecfddd8fe4f48ba98745 *R/regvec3d.R
+85013b79dace20b188e3ffbc5fecd51f *R/regvec3d.R
 ed0706c0e1029fd11e88181de515a1d7 *R/rowops.R
 7b7dc42340e00e710255490e7d23401e *R/showeqn.R
 89f46b1f659af7151eb05aa3c06e05fc *R/swp.R
@@ -25,7 +25,7 @@ c51eb85ca518f1063c91347ba59c8612 *R/vandermode.R
 1d322870c6f14959ba6e5ea97872e82d *R/vec.R
 2e317f32bb5e6a4b509e90b0e8073848 *R/vectors.R
 7db471401b5d12c17629fdbaad293114 *R/vectors3d.R
-fa1f85a0e73f6bcb12c7f507f0cc2d7f *README.md
+fc989dbd22f32dc31335a35981520080 *README.md
 68ebbd94bd18caaa8820ad94d3eb827c *build/vignette.rds
 1ddb53305bce56a87b7abe159075814c *data/class.RData
 3c7744f27d03d51a7e97577432a180c2 *data/therapy.RData
@@ -38,7 +38,7 @@ f3e5bf35aea232a90a3f77188e262cc8 *inst/doc/eigen-ex1.html
 fd359ba4ca3547953545618488496766 *inst/doc/eigen-ex2.html
 51159e09d4b7cbb83120c6614fc76052 *inst/doc/gramreg.R
 045d2c3eec8748a975e735124ae4ed96 *inst/doc/gramreg.Rmd
-668bc2ee9d1e7b645a0763e16fd02b19 *inst/doc/gramreg.html
+9339cc37276e9fa7fb8aff40b9d9fbf7 *inst/doc/gramreg.html
 c72e3a052515a73bc44ae26a6fce7e64 *inst/doc/linear-equations.R
 87d073dae64eb5c4e22f4ddf870f7e58 *inst/doc/linear-equations.Rmd
 5acbfcf3e74f4132dd9490e072bd598a *inst/doc/linear-equations.html
@@ -64,7 +64,7 @@ b603e9917681d9d277eb3b441123c897 *man/eig.Rd
 4a89f647582bac5d3915c671aed04f18 *man/matlib.Rd
 3adfba5e424f9af71a80daf98e852193 *man/minor.Rd
 91f132142b285baa5bd1f3a4aea5da36 *man/mpower.Rd
-a7930bd09163c990339c22e54fdc3b34 *man/plot.regvec3d.Rd
+6ea66adbf0fbb44d6beb84c3ece0811c *man/plot.regvec3d.Rd
 beb054381efaea89a7ab985fa4397479 *man/plotEqn.Rd
 9e20762d115a3c59f036ca86ad4afabe *man/plotEqn3d.Rd
 e6c752b5d31c717200510c2050094134 *man/point_on_line.Rd

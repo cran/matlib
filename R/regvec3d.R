@@ -194,7 +194,7 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #' @param x           A \dQuote{regvec3d} object
 #' @param y           Ignored; only included for compatibility with the S3 generic
 #' @param dimension   Number of dimensions to plot: \code{3} (default) or \code{2}
-#' @param col         A vector of 4 colors
+#' @param col         A vector of 5 colors
 #' @param col.plane   Color of the base plane in a 3D plot or axes in a 2D plot
 #' @param cex.lab     character expansion applied to vector labels. May be a number or numeric vector corresponding to the the
 #'        rows of \code{X}, recycled as necessary.
@@ -204,6 +204,9 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #' @param show.hplane If \code{TRUE}, draws the plane defined by \code{y}, \code{yhat} and the origin in the 3D
 #' @param show.angles If \code{TRUE}, draw and label the angle between the \code{x1} and \code{x2} and between \code{y} and \code{yhat},
 #'                     corresponding respectively to the correlation between the xs and the multiple correlation
+#' @param error.sphere Plot a sphere (or in 2D, a circle) of radius equal to the length of
+#'                     the residual vector, centered either at the origin (\code{"e"})
+#'                     or at the fitted-values vector (\code{"y.hat"}; the default is \code{"none"}.)
 #' @param grid        If \code{TRUE}, draws a light grid on the base plane
 #' @param add         If \code{TRUE}, add to the current plot; otherwise start a new rgl or plot window
 #' @param ...         Parameters passed down to functions [unused now]
@@ -214,6 +217,7 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 
 #' @family vector diagrams
 #' @export
+#' @importFrom graphics symbols
 #'
 #' @examples
 #' if (require(car)) {
@@ -221,6 +225,7 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #'    dunc.reg <- regvec3d(prestige ~ income + education, data=Duncan)
 #'    plot(dunc.reg)
 #'    plot(dunc.reg, dimension=2)
+#'    plot(dunc.reg, error.sphere="e")
 #'    summary(dunc.reg)
 #'
 #'    # Example showing Simpson's paradox
@@ -231,9 +236,10 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #' }
 
 plot.regvec3d <- function(x, y, dimension=3,
-    col=c("black", "red", "blue", "brown"), col.plane="gray",
+    col=c("black", "red", "blue", "brown", "lightgray"), col.plane="gray",
     cex.lab=1.2,
     show.base=2, show.marginal=FALSE, show.hplane=TRUE, show.angles=TRUE,
+    error.sphere=c("none", "e", "y.hat"),
     grid=FALSE, add=FALSE, ...){
 
     angle <- function(v1, v2) {
@@ -241,6 +247,7 @@ plot.regvec3d <- function(x, y, dimension=3,
       acos(r12)*180/pi
     }
 
+    error.sphere <- match.arg(error.sphere)
     vectors <- x$vectors
     origin <- c(0,0,0)
     abs <- TRUE
@@ -279,14 +286,24 @@ plot.regvec3d <- function(x, y, dimension=3,
     	    arc(vectors[1, ], origin, vectors[2, ], color=col[3])
 	    }
 	    corner(vectors[5, ], origin, vectors[4, ], color=col[4], d=0.05, absolute=abs)
-	    corner(origin, vectors[5, ], vectors[3, ], color=col[4], d=0.05, absolute=abs)
+        corner(origin, vectors[5, ], vectors[3, ], color=col[4], d=0.05, absolute=abs)
+	    if ("e" == error.sphere) spheres3d(0, 0, 0, radius=len(vectors[4, ]),
+	        color=col[5], alpha=0.1)
+	    else if ("y.hat" == error.sphere) spheres3d(x$vectors[5, ], radius=len(vectors[4, ]),
+	        color=col[5], alpha=0.1)
     }
     else {
         vecs2D <- vectors[c(1,2,5,6,7,8,9), 1:2]
         xlim <- range(vecs2D[,1]) + c(-.1, .1)
         ylim <- range(vecs2D[,2]) + c(-.1, .1)
-        if (!add) plot(xlim, ylim, type="n", xlab="", ylab="", asp=1, axes=abs)
-        abline(h=0, v=0, col=col.plane)
+        if (!add) plot(xlim, ylim, type="n", xlab="", ylab="", asp=1, axes=FALSE)
+#        abline(h=0, v=0, col=col.plane)
+        if ("e" == error.sphere) symbols(0, 0, circles=len(vectors[4, ]),
+                                         fg=col[5], bg=col[5], add=TRUE, inches=FALSE,
+                                         xpd=TRUE)
+        else if ("y.hat" == error.sphere) symbols(vecs2D[3, 1], vecs2D[3, 2], circles=len(vectors[4, ]),
+                                                  fg=col[5], bg=col[5], add=TRUE, inches=FALSE,
+                                                  xpd=TRUE)
         if (show.marginal){
             vectors(vecs2D[6:7, ], pos.lab=c(4, 4), col=col[c(1, 1)], cex.lab=cex.lab, xpd=TRUE)
             lines(vecs2D[c(3, 6), ], col=col[4], lty=2)
