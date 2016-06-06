@@ -1,6 +1,6 @@
 #' Rank of a Matrix
 #'
-#' Returns the rank of a matrix \code{X}, using the QR decomposition, \code{qr()}.
+#' Returns the rank of a matrix \code{X}, using the QR decomposition, \code{\link{QR}}.
 #' Included here as a simple function, because \code{rank} does something different
 #' and it is not obvious what to use for matrix rank.
 #'
@@ -24,6 +24,5 @@
 #' M
 #' R(M)
 R <- function(X) {
-  if (!is.numeric(X) || !is.matrix(X)) stop("X must be a numeric matrix")
-  qr(X)$rank
+  QR(X)$rank
 }

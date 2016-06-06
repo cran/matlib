@@ -3,7 +3,7 @@
 # matlib
 Matrix Functions for Teaching and Learning Linear Algebra and Multivariate Statistics
 
-Version 0.7.1
+Version 0.7.3
 
 These functions are mainly for tutorial purposes in learning matrix algebra
 ideas using R. In some cases, functions are provided for concepts available
@@ -74,6 +74,7 @@ $\mathbf{A x = b}$.  These functions provide a `verbose=TRUE` argument to show t
   - `eig()` - eigenvalues and eigenvectors
   - `SVD()` - singular value decomposition
   - `power_method()` - find dominant eigenvector using the power method 
+  - `showEig()` - draw eigenvectors on a 2D scatterplot with a dataEllipse
 
 7. Vector diagrams: functions for drawing vector diagrams in 2D and 3D
 
