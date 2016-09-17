@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly" />
 
-<meta name="date" content="2016-06-05" />
+<meta name="date" content="2016-09-16" />
 
 <title>Gram-Schmidt Orthogonalization and Regression</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Gram-Schmidt Orthogonalization and Regression</h1>
 <h4 class="author"><em>Michael Friendly</em></h4>
-<h4 class="date"><em>2016-06-05</em></h4>
+<h4 class="date"><em>2016-09-16</em></h4>
 
 
 
@@ -87,12 +87,12 @@ class$male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(clas
                    <span class="dt">IQ =</span> <span class="kw">round</span>(<span class="dv">20</span> +<span class="st"> </span>height +<span class="st"> </span><span class="dv">3</span>*age -.<span class="dv">1</span>*weight -<span class="dv">3</span>*male +<span class="st"> </span><span class="dv">10</span>*<span class="kw">rnorm</span>(<span class="kw">nrow</span>(class))))
 <span class="kw">head</span>(class)</code></pre></div>
 <pre><code>##         sex age height weight male  IQ
-## Alfred    M  14   69.0  112.5    1 106
-## Alice     F  13   56.5   84.0    0 117
-## Barbara   F  13   65.3   98.0    0  92
-## Carol     F  14   62.8  102.5    0  95
-## Henry     M  14   63.5  102.5    1  91
-## James     M  12   57.3   83.0    1  95</code></pre>
+## Alfred    M  14   69.0  112.5    1 119
+## Alice     F  13   56.5   84.0    0 104
+## Barbara   F  13   65.3   98.0    0 110
+## Carol     F  14   62.8  102.5    0 107
+## Henry     M  14   63.5  102.5    1 117
+## James     M  12   57.3   83.0    1 118</code></pre>
 <p>Reorder the predictors we want, forming a numeric matrix, <code>X</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(class[,<span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">2</span>,<span class="dv">5</span>)])
 <span class="kw">head</span>(X)</code></pre></div>
@@ -173,12 +173,12 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 <pre><code>## Analysis of Variance Table
 ## 
 ## Response: IQ
-##           Df Sum Sq Mean Sq F value Pr(&gt;F)  
-## height     1    667     667    4.56  0.059 .
-## weight     1    511     511    3.49  0.091 .
-## age        1    254     254    1.74  0.217  
-## male       1      1       1    0.00  0.946  
-## Residuals 10   1464     146                 
+##           Df Sum Sq Mean Sq F value Pr(&gt;F)   
+## height     1    600     600   13.07 0.0047 **
+## weight     1     10      10    0.22 0.6497   
+## age        1    132     132    2.88 0.1203   
+## male       1     39      39    0.84 0.3807   
+## Residuals 10    459      46                  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>Regression of IQ on the orthogonalized variables in <code>Z</code></p>
@@ -187,12 +187,12 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 <pre><code>## Analysis of Variance Table
 ## 
 ## Response: IQ
-##           Df Sum Sq Mean Sq F value Pr(&gt;F)  
-## height     1    667     667    4.56  0.059 .
-## weight     1    511     511    3.49  0.091 .
-## age        1    254     254    1.74  0.217  
-## male       1      1       1    0.00  0.946  
-## Residuals 10   1464     146                 
+##           Df Sum Sq Mean Sq F value Pr(&gt;F)   
+## height     1    600     600   13.07 0.0047 **
+## weight     1     10      10    0.22 0.6497   
+## age        1    132     132    2.88 0.1203   
+## male       1     39      39    0.84 0.3807   
+## Residuals 10    459      46                  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>This illustrates that <code>anova()</code> tests for linear models are <em>sequential</em> tests. They test hypotheses about the extra contribution of each variable over and above all previous ones, in a given order. These usually do not make substantive sense, except in testing ordered (“hierarchical”) models.</p>
