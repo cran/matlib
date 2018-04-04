@@ -4,7 +4,7 @@
 \alias{LU}
 \title{LU Decomposition}
 \usage{
-LU(A, b, tol = sqrt(.Machine$double.eps), fractions = FALSE)
+LU(A, b, tol = sqrt(.Machine$double.eps), verbose = FALSE, ...)
 }
 \arguments{
 \item{A}{coefficient matrix}
@@ -14,7 +14,9 @@ LU(A, b, tol = sqrt(.Machine$double.eps), fractions = FALSE)
 
 \item{tol}{tolerance for checking for 0 pivot}
 
-\item{fractions}{logical; if \code{TRUE}, try to express non-integers as rational numbers}
+\item{verbose}{logical; if \code{TRUE}, print intermediate steps}
+
+\item{...}{additional arguments passed to \code{\link{showEqn}}}
 }
 \value{
 A list of matrix components of the solution, \code{P}, \code{L} and \code{U}. If \code{b}
@@ -28,7 +30,7 @@ permutation matrix.
 \details{
 The LU decomposition is used to solve the equation \eqn{A x = b} by calculating
 \eqn{L(Ux - d) = 0}, where \eqn{Ld = b}. If row exchanges are necessary for
-\eqn{A} then the permutation matrix \eqn{P} will be requred to exchange the rows in \eqn{A};
+\eqn{A} then the permutation matrix \eqn{P} will be required to exchange the rows in \eqn{A};
 otherwise, \eqn{P} will be an identity matrix and the LU equation will be simplified to
 \eqn{A = L U}.
 }
@@ -41,6 +43,9 @@ otherwise, \eqn{P} will be an identity matrix and the LU equation will be simpli
   (ret <- LU(A)) # P is an identity; no row swapping
   with(ret, L \%*\% U) # check that A = L * U
   LU(A, b)
+  
+  LU(A, b, verbose=TRUE)
+  LU(A, b, verbose=TRUE, fractions=TRUE)
 
   # permutations required in this example
   A <- matrix(c(1,  1, -1,
@@ -55,4 +60,3 @@ otherwise, \eqn{P} will be an identity matrix and the LU equation will be simpli
 \author{
 Phil Chalmers
 }
-

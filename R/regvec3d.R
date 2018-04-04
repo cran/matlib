@@ -64,14 +64,16 @@ regvec3d <- function(x1, ...){
 #'                    are abbreviated to this length before being combined with the other \code{name.*} arguments
 #'
 #' @describeIn regvec3d Formula method for regvec3d
+#' @references Fox, J. and Friendly, M. (2016). "Visualizing Simultaneous Linear Equations, Geometric Vectors, and
+#' Least-Squares Regression with the matlib Package for R". \emph{useR Conference}, Stanford, CA, June 27 - June 30, 2016.
 #' @export
 #'
 #' @examples
 #' library(rgl)
 #' therapy.vec <- regvec3d(therapy ~ perstest + IE, data=therapy)
 #' therapy.vec
-#' plot(therapy.vec)
-#' plot(therapy.vec, dimension="2")
+#' plot(therapy.vec, col.plane="darkgreen")
+#' plot(therapy.vec, dimension=2)
 
 regvec3d.formula <- function(formula, data=NULL, which=1:2, name.x1, name.x2,
                              name.y, name.e, name.y.hat,
@@ -194,7 +196,9 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #' @param x           A \dQuote{regvec3d} object
 #' @param y           Ignored; only included for compatibility with the S3 generic
 #' @param dimension   Number of dimensions to plot: \code{3} (default) or \code{2}
-#' @param col         A vector of 5 colors
+#' @param col         A vector of 5 colors. \code{col[1]} is used for the y and residual (e) vectors, and for x1 and x2;
+#'                    \code{col[2]} is used for the vectors \code{y -> yhat} and \code{y -> e};
+#'                    \code{col[3]} is used for the vectors \code{yhat -> b1} and \code{yhat -> b2};
 #' @param col.plane   Color of the base plane in a 3D plot or axes in a 2D plot
 #' @param cex.lab     character expansion applied to vector labels. May be a number or numeric vector corresponding to the the
 #'        rows of \code{X}, recycled as necessary.
@@ -224,8 +228,8 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #' @importFrom graphics symbols
 #'
 #' @examples
-#' if (require(car)) {
-#'    data("Duncan", package="car")
+#' if (require(carData)) {
+#'    data("Duncan", package="carData")
 #'    dunc.reg <- regvec3d(prestige ~ income + education, data=Duncan)
 #'    plot(dunc.reg)
 #'    plot(dunc.reg, dimension=2)
@@ -233,7 +237,8 @@ regvec3d.default <- function(x1, x2, y, scale=FALSE, normalize=TRUE,
 #'    summary(dunc.reg)
 #'
 #'    # Example showing Simpson's paradox
-#'    states.vec <- regvec3d(SATM ~ pay + percent, data=car::States, scale=TRUE)
+#'    data("States", package="carData")
+#'    states.vec <- regvec3d(SATM ~ pay + percent, data=States, scale=TRUE)
 #'    plot(states.vec, show.marginal=TRUE)
 #'    plot(states.vec, show.marginal=TRUE, dimension=2)
 #'    summary(states.vec)
@@ -243,14 +248,15 @@ plot.regvec3d <- function(x, y, dimension=3,
                           col=c("black", "red", "blue", "brown", "lightgray"), col.plane="gray",
                           cex.lab=1.2,
                           show.base=2, show.marginal=FALSE, show.hplane=TRUE, show.angles=TRUE,
-                          error.sphere=c("none", "e", "y.hat"), scale.error.sphere=x$scale, level.error.sphere=0.95, 
+                          error.sphere=c("none", "e", "y.hat"), scale.error.sphere=x$scale,
+                          level.error.sphere=0.95,
                           grid=FALSE, add=FALSE, ...){
-  
+
   angle <- function(v1, v2) {
     r12 <- crossprod(v1, v2)/(len(v1)*len(v2))
     acos(r12)*180/pi
   }
-  
+
   error.sphere <- match.arg(error.sphere)
   vectors <- x$vectors
   origin <- c(0,0,0)
@@ -262,7 +268,8 @@ plot.regvec3d <- function(x, y, dimension=3,
     }
     ref.length <- vectors3d(vectors[1:7, ], draw=FALSE)
     vectors3d(vectors[3:4, ], color=col[1], lwd=2, cex.lab=cex.lab, ref.length=ref.length)
-    vectors3d(vectors[c(1:2, 5:7), ], color=col.plane, lwd=2, cex.lab=cex.lab, ref.length=ref.length)
+    vectors3d(vectors[1:2, ], color=col[1], lwd=2, cex.lab=cex.lab, ref.length=ref.length)
+    vectors3d(vectors[5:7, ], color=col.plane, lwd=2, cex.lab=cex.lab, ref.length=ref.length)
     if (show.base > 0) planes3d(0, 0, 1, 0, color=col.plane, alpha=0.2)
     if (show.base > 1) planes3d(0, 0, 1, -.01, color=col.plane, alpha=0.1)
     lines3d(vectors[c(3, 5), ], color=col[2], lwd=2)     # y -> yhat
@@ -297,8 +304,8 @@ plot.regvec3d <- function(x, y, dimension=3,
                                        color=col[5], alpha=0.1)
     else if ("y.hat" == error.sphere) {
       sqrt.vif <- sqrt(1/(1 - (cos(angle(vectors[1,], vectors[2,])*pi/180))^2))
-      spheres3d(x$vectors[5, ], 
-                radius= rad <- if (scale.error.sphere) 
+      spheres3d(x$vectors[5, ],
+                radius= rad <- if (scale.error.sphere)
                   sqrt.vif*qt((1 - level.error.sphere)/2, df=x$model$df.residual, lower.tail=FALSE)*len(vectors[4, ])/sqrt(x$model$df.residual)
                 else len(vectors[4, ]),
                 color=col[5], alpha=0.25)
@@ -316,7 +323,7 @@ plot.regvec3d <- function(x, y, dimension=3,
                                      xpd=TRUE)
     else if ("y.hat" == error.sphere) {
       sqrt.vif <- sqrt(1/(1 - (cos(angle(vectors[1,], vectors[2,])*pi/180))^2))
-      symbols(vecs2D[3, 1], vecs2D[3, 2], circles=if(scale.error.sphere) 
+      symbols(vecs2D[3, 1], vecs2D[3, 2], circles=if(scale.error.sphere)
         sqrt.vif*qt((1 - level.error.sphere)/2, df=x$model$df.residual, lower.tail=FALSE)*len(vectors[4, ])/sqrt(x$model$df.residual)
         else len(vectors[4, ]),
         fg=col[5], bg=col[5], add=TRUE, inches=FALSE,
@@ -377,7 +384,7 @@ circle3d <- function(center, radius, segments=100, fill=FALSE, ...){
   #'
   #' A utility function for drawing a horizontal circle in a 3D graph
   #'
-  #' @param center  A vector of length 3. 
+  #' @param center  A vector of length 3.
   #' @param radius  A positive number.
   #' @param segments  An integer specifying the number of line segments to use to draw the circle (default, 100).
   #' @param fill logical; if \code{TRUE}, the circle is filled (the default is \code{FALSE}).

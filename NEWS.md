@@ -1,4 +1,41 @@
-matlib 0.8.0
+# matlib 0.9.1
+
+- fix references to car datatsets -> carData
+
+# matlib 0.9.0
+
+- `showEqn()` gains a `reduced` logical to print only the unique regression equations
+  when a `lm()`-type object is passed. May be combined with the `simplify` logical argument
+  for further reductions
+- `echelon()` gains a `reduced` logical to indicate whether the reduced or non-reduced form is computed
+- `powerMethod()` gains a `plot = TRUE` logical to draw the iteration history
+- added support for `'lm'` objects to `showEqn()` to show the design matrix equations
+- added `verbose` option to `GramSchmidt()` and another example
+- added `printMatEqn()` to print matrix expressions side-by-side
+- prepare to release as a cumulative major version
+- Phil Chalmers is now recognized officially as a package author [aut]
+
+# matlib 0.8.3
+
+- rename functions for consistency: `eig()` -> `Eigen()`, `point_on_line()` -> `pointOnLine()`, `power_method()` -> `powerMethod()`, `row_cofactors()` -> `rowCofactors()`, `row_minors()` -> `rowMinors()`.
+
+- add `Det()` to compute determinants by elimination, from eigenvalues, or by minors and cofactors, with possibility of `verbose` output.
+- `plotEqn3d()` gets an `axes` argument and `lit` to control lighting of the planes; `lit` solves a problem with the planes becoming indistinguishable in some rotations.
+- add `svdDemo()` function to illustrate the SVD of a 3 x 3 matrix [thx: Duncan Murdoch]
+- add `symMat()` to create a square symmetric matrix from a vector.
+- add `angle()` to calculate angle between vectors
+- `powerMethod()` gets a `keep` argument, for possible use in plotting the convergence of eigenvectors.
+- add `adjoint()`, to round out methods for determinants
+- add `GramSchmidt()` for the Gram-Schmidt algorithm on columns of a matrix. The existing function `gsorth()` will be deprecated and then removed.
+- `gsorth()` has been deprecated.
+- fixed use of MASS::fractions in gaussianElimination
+- added `printMatEqn()` to print matrix expressions side-by-side
+
+# matlib 0.8.1
+
+- remove inst/doc to satisfy CRAN
+
+# matlib 0.8.0
 
 - add a vignette on properties of determinants (`det-ex1`)
 - add a vignette on evaluation of determinants (`det-ex2`)

@@ -2,15 +2,19 @@ Package: matlib
 Type: Package
 Title: Matrix Functions for Teaching and Learning Linear Algebra and
         Multivariate Statistics
-Version: 0.8.1
-Date: 2016-09-16
+Version: 0.9.1
+Date: 2018-04-02
 Authors@R: c(person(given = "Michael", family = "Friendly", role=c("aut", "cre"), email="friendly@yorku.ca"),
             person(given = "John", family = "Fox", role="aut"),
+            person(given = "Phil", family = "Chalmers", role="aut"),
             person(given = "Georges", family = "Monette", role="ctb"),
-            person(given = "Gaston", family = "Sanchez", role="ctb"),
-            person(given = "Phil", family = "Chalmers", role="ctb")
+            person(given = "Gaston", family = "Sanchez", role="ctb")
             )
-Author: Michael Friendly [aut, cre], John Fox [aut], Georges Monette [ctb], Gaston Sanchez [ctb], Phil Chalmers [ctb]
+Author: Michael Friendly [aut, cre],
+  John Fox [aut],
+  Phil Chalmers [aut],
+  Georges Monette [ctb],
+  Gaston Sanchez [ctb]
 Maintainer: Michael Friendly <friendly@yorku.ca>
 Description: A collection of matrix functions for teaching and learning matrix
     linear algebra as used in multivariate statistical methods. These functions are
@@ -23,11 +27,11 @@ License: GPL (>= 2)
 URL: https://github.com/friendly/matlib
 BugReports: https://github.com/friendly/matlib/issues
 LazyData: TRUE
-Suggests: MASS, knitr, rglwidget, rmarkdown, xtable
-Imports: rgl, car
+Suggests: knitr, rglwidget, rmarkdown, carData
+Imports: xtable, MASS, rgl, car, methods
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2016-09-17 01:18:39 UTC; friendly
+Packaged: 2018-04-04 13:06:58 UTC; Friendly
 Repository: CRAN
-Date/Publication: 2016-09-17 07:10:53
+Date/Publication: 2018-04-04 13:58:37 UTC

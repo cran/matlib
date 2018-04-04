@@ -29,13 +29,13 @@ cofactor(M, 1, 2)
 cofactor(M, 1, 3)
 
 }
+\seealso{
+\code{\link{rowCofactors}} for all cofactors of a given row
+
+Other determinants: \code{\link{Det}},
+  \code{\link{adjoint}}, \code{\link{minor}},
+  \code{\link{rowCofactors}}, \code{\link{rowMinors}}
+}
 \author{
 Michael Friendly
 }
-\seealso{
-\code{\link{row_cofactors}} for all cofactors of a given row
-
-Other determinants: \code{\link{minor}},
-  \code{\link{row_cofactors}}, \code{\link{row_minors}}
-}
-

@@ -8,9 +8,13 @@
 #'
 #' @return a scalar or vector containing the length(s)
 #' @seealso \code{\link[base]{norm}} for more general matrix norms
+#' @export
 #' @examples
 #' len(1:3)
 #' len(matrix(1:9, 3, 3))
+#' 
+#' # distance between two vectors
+#' len(1:3 - c(1,1,1))
 
 len <- function(X) {
   if (!is.numeric(X)) stop("X must be numeric")

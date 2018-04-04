@@ -1,6 +1,6 @@
 #' Matrix Power
 #'
-#' A simple function to demonstrate the power of a square symmetric matrix in terms of its eigenvalues and eigenvectors.
+#' A simple function to demonstrate calculating the power of a square symmetric matrix in terms of its eigenvalues and eigenvectors.
 #'
 #' @details The matrix power \code{p} can be a fraction or other non-integer.  For example, \code{p=1/2} and
 #'      \code{p=1/3} give a square-root and cube-root of the matrix.
@@ -13,6 +13,7 @@
 #' @param tol tolerance for determining if the matrix is symmetric
 #' @return \code{A} raised to the power \code{p}: \code{A^p}
 #' @seealso The \code{{\%^\%}} operator in the \pkg{expm} package is far more efficient
+#' @export
 #' @examples
 #' C <- matrix(c(1,2,3,2,5,6,3,6,10), 3, 3) # nonsingular, symmetric
 #' C

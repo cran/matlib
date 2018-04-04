@@ -14,6 +14,7 @@
 #'     of the matrix \code{X}
 #' @author John Fox and Georges Monette
 #' @seealso \code{\link[base]{qr}}
+#' @export
 #' @examples
 #' A <- matrix(c(1,2,3,4,5,6,7,8,10), 3, 3) # a square nonsingular matrix
 #' res <- QR(A)
@@ -41,7 +42,7 @@ QR <- function(X, tol=sqrt(.Machine$double.eps)){
   E[, 1] <- U[, 1]/length(U[, 1])
   for (j in 2:ncol(U)){
     for (k in 1:(j - 1)){
-      U[, j] <- U[, j] - (X[, j] %*% E[, k]) * E[, k]
+      U[, j] <- U[, j] - as.vector(X[, j] %*% E[, k]) * E[, k]
     }
     len.U.j <- length(U[, j])
     if (len.U.j > tol) E[, j] <- U[, j]/len.U.j

@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly" />
 
-<meta name="date" content="2016-09-16" />
+<meta name="date" content="2018-04-04" />
 
 <title>Matrix inversion by elementary row operations</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Matrix inversion by elementary row operations</h1>
 <h4 class="author"><em>Michael Friendly</em></h4>
-<h4 class="date"><em>2016-09-16</em></h4>
+<h4 class="date"><em>2018-04-04</em></h4>
 
 
 
@@ -97,7 +97,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h3>Create a 3 x 3 matrix</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">   A &lt;-<span class="st"> </span><span class="kw">matrix</span>( <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>,
                   <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>,
-                  <span class="dv">0</span>, <span class="dv">1</span>,-<span class="dv">2</span>), <span class="dt">nrow=</span><span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)</code></pre></div>
+                  <span class="dv">0</span>, <span class="dv">1</span>,<span class="op">-</span><span class="dv">2</span>), <span class="dt">nrow=</span><span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)</code></pre></div>
 </div>
 <div id="join-an-identity-matrix-to-a" class="section level3">
 <h3>Join an identity matrix to A</h3>
@@ -118,13 +118,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="using-r-arithmetic" class="section level3">
 <h3>1. Using R arithmetic</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">2</span>,] -<span class="st"> </span><span class="dv">2</span>*AI[<span class="dv">1</span>,])     <span class="co"># row 2 &lt;- row 2 - 2 * row 1</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">2</span>,] <span class="op">-</span><span class="st"> </span><span class="dv">2</span><span class="op">*</span>AI[<span class="dv">1</span>,])     <span class="co"># row 2 &lt;- row 2 - 2 * row 1</span></code></pre></div>
 <pre><code>## [1]  0 -1 -6 -2  1  0</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">3</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">3</span>,] +<span class="st"> </span>AI[<span class="dv">2</span>,])       <span class="co"># row 3 &lt;- row 3 + row 2</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">3</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">3</span>,] <span class="op">+</span><span class="st"> </span>AI[<span class="dv">2</span>,])       <span class="co"># row 3 &lt;- row 3 + row 2</span></code></pre></div>
 <pre><code>## [1]  0  0 -8 -2  1  1</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span>-<span class="dv">1</span> *<span class="st"> </span>AI[<span class="dv">2</span>,])           <span class="co"># row 2 &lt;- -1 * row 2</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span><span class="op">-</span><span class="dv">1</span> <span class="op">*</span><span class="st"> </span>AI[<span class="dv">2</span>,])           <span class="co"># row 2 &lt;- -1 * row 2</span></code></pre></div>
 <pre><code>## [1]  0  1  6  2 -1  0</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">3</span>,] &lt;-<span class="st">  </span>-(<span class="dv">1</span>/<span class="dv">8</span>) *<span class="st"> </span>AI[<span class="dv">3</span>,])        <span class="co"># row 3 &lt;- -.25 * row 3</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    (AI[<span class="dv">3</span>,] &lt;-<span class="st">  </span><span class="op">-</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">8</span>) <span class="op">*</span><span class="st"> </span>AI[<span class="dv">3</span>,])        <span class="co"># row 3 &lt;- -.25 * row 3</span></code></pre></div>
 <pre><code>## [1]  0.000  0.000  1.000  0.250 -0.125 -0.125</code></pre>
 <p>Now, all elements below the diagonal are zero</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    AI</code></pre></div>
@@ -133,9 +133,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 ## [2,]    0    1    6 2.00 -1.000  0.000
 ## [3,]    0    0    1 0.25 -0.125 -0.125</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">      <span class="co">#--continue, making above diagonal == 0</span>
-    AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">2</span>,] -<span class="st"> </span><span class="dv">6</span> *<span class="st"> </span>AI[<span class="dv">3</span>,]     <span class="co"># row 2 &lt;- row 2 - 6 * row 3</span>
-    AI[<span class="dv">1</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">1</span>,] -<span class="st"> </span><span class="dv">3</span> *<span class="st"> </span>AI[<span class="dv">3</span>,]     <span class="co"># row 1 &lt;- row 1 - 3 * row 3</span>
-    AI[<span class="dv">1</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">1</span>,] -<span class="st"> </span><span class="dv">2</span> *<span class="st"> </span>AI[<span class="dv">2</span>,]     <span class="co"># row 1 &lt;- row 1 - 2 * row 2</span>
+    AI[<span class="dv">2</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">2</span>,] <span class="op">-</span><span class="st"> </span><span class="dv">6</span> <span class="op">*</span><span class="st"> </span>AI[<span class="dv">3</span>,]     <span class="co"># row 2 &lt;- row 2 - 6 * row 3</span>
+    AI[<span class="dv">1</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">1</span>,] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>AI[<span class="dv">3</span>,]     <span class="co"># row 1 &lt;- row 1 - 3 * row 3</span>
+    AI[<span class="dv">1</span>,] &lt;-<span class="st"> </span>AI[<span class="dv">1</span>,] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>AI[<span class="dv">2</span>,]     <span class="co"># row 1 &lt;- row 1 - 2 * row 2</span>
 
     AI</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]  [,4]   [,5]   [,6]
@@ -143,7 +143,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 ## [2,]    0    1    0  0.50 -0.250  0.750
 ## [3,]    0    0    1  0.25 -0.125 -0.125</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">   <span class="co">#-- last three cols are the inverse</span>
-  (AInv &lt;-<span class="st"> </span>AI[,-(<span class="dv">1</span>:<span class="dv">3</span>)])</code></pre></div>
+  (AInv &lt;-<span class="st"> </span>AI[,<span class="op">-</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>)])</code></pre></div>
 <pre><code>##       [,1]   [,2]   [,3]
 ## [1,] -0.75  0.875 -1.125
 ## [2,]  0.50 -0.250  0.750
@@ -159,10 +159,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h3>2. Do the same, using matlib functions <code>rowadd()</code>, <code>rowmult()</code> and <code>rowswap()</code></h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">   AI &lt;-<span class="st">  </span><span class="kw">cbind</span>(A, <span class="kw">diag</span>(<span class="dv">3</span>))
 
-   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">1</span>, <span class="dv">2</span>, -<span class="dv">2</span>)        <span class="co"># row 2 &lt;- row 2 - 2 * row 1</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">1</span>, <span class="dv">2</span>, <span class="op">-</span><span class="dv">2</span>)        <span class="co"># row 2 &lt;- row 2 - 2 * row 1</span>
    AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>)         <span class="co"># row 3 &lt;- row 3 + row 2</span>
-   AI &lt;-<span class="st"> </span><span class="kw">rowmult</span>(AI, <span class="dv">2</span>, -<span class="dv">1</span>)          <span class="co"># row 1 &lt;- -1 * row 2</span>
-   AI &lt;-<span class="st"> </span><span class="kw">rowmult</span>(AI, <span class="dv">3</span>, -<span class="dv">1</span>/<span class="dv">8</span>)        <span class="co"># row 3 &lt;- -.25 * row 3</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowmult</span>(AI, <span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>)          <span class="co"># row 1 &lt;- -1 * row 2</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowmult</span>(AI, <span class="dv">3</span>, <span class="op">-</span><span class="dv">1</span><span class="op">/</span><span class="dv">8</span>)        <span class="co"># row 3 &lt;- -.25 * row 3</span>
 
    <span class="co"># show result so far</span>
    AI</code></pre></div>
@@ -171,9 +171,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 ## [2,]    0    1    6 2.00 -1.000  0.000
 ## [3,]    0    0    1 0.25 -0.125 -0.125</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    <span class="co">#--continue, making above-diagonal == 0</span>
-   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">3</span>, <span class="dv">2</span>, -<span class="dv">6</span>)        <span class="co"># row 2 &lt;- row 2 - 6 * row 3</span>
-   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">2</span>, <span class="dv">1</span>, -<span class="dv">2</span>)        <span class="co"># row 1 &lt;- row 1 - 2 * row 2</span>
-   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">3</span>, <span class="dv">1</span>, -<span class="dv">3</span>)        <span class="co"># row 1 &lt;- row 1 - 3 * row 3</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">3</span>, <span class="dv">2</span>, <span class="op">-</span><span class="dv">6</span>)        <span class="co"># row 2 &lt;- row 2 - 6 * row 3</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">2</span>, <span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>)        <span class="co"># row 1 &lt;- row 1 - 2 * row 2</span>
+   AI &lt;-<span class="st"> </span><span class="kw">rowadd</span>(AI, <span class="dv">3</span>, <span class="dv">1</span>, <span class="op">-</span><span class="dv">3</span>)        <span class="co"># row 1 &lt;- row 1 - 3 * row 3</span>
    AI</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]  [,4]   [,5]   [,6]
 ## [1,]    1    0    0 -0.75  0.875 -1.125
@@ -265,7 +265,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

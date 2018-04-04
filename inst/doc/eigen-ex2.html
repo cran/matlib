@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly" />
 
-<meta name="date" content="2016-09-16" />
+<meta name="date" content="2018-04-04" />
 
 <title>Eigenvalues: Spectral Decomposition</title>
 
@@ -70,15 +70,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Eigenvalues: Spectral Decomposition</h1>
 <h4 class="author"><em>Michael Friendly</em></h4>
-<h4 class="date"><em>2016-09-16</em></h4>
+<h4 class="date"><em>2018-04-04</em></h4>
 
 
 
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(matlib)   <span class="co"># use the package</span></code></pre></div>
 <div id="setup" class="section level2">
 <h2>Setup</h2>
-<p>This vignette uses an example of a <span class="math inline">\(3 \times 3\)</span> matrix to illustrate some properties of eigenvalues and eigenvectors. We could consider this to be the variance-covariance matrix of three variables, but the main thing is that the matrix is <strong>square</strong> and <strong>symmetric</strong>, which guarrantees that the eigenvalues, <span class="math inline">\(\lambda_i\)</span> are real numbers, and non-negative, <span class="math inline">\(\lambda_i \ge 0\)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, -<span class="dv">4</span>, <span class="dv">2</span>, -<span class="dv">4</span>, <span class="dv">11</span>, -<span class="dv">2</span>, <span class="dv">2</span>, -<span class="dv">2</span>, <span class="dv">8</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)
+<p>This vignette uses an example of a <span class="math inline">\(3 \times 3\)</span> matrix to illustrate some properties of eigenvalues and eigenvectors. We could consider this to be the variance-covariance matrix of three variables, but the main thing is that the matrix is <strong>square</strong> and <strong>symmetric</strong>, which guarantees that the eigenvalues, <span class="math inline">\(\lambda_i\)</span> are real numbers, and non-negative, <span class="math inline">\(\lambda_i \ge 0\)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">13</span>, <span class="op">-</span><span class="dv">4</span>, <span class="dv">2</span>, <span class="op">-</span><span class="dv">4</span>, <span class="dv">11</span>, <span class="op">-</span><span class="dv">2</span>, <span class="dv">2</span>, <span class="op">-</span><span class="dv">2</span>, <span class="dv">8</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)
 A</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   13   -4    2
@@ -87,9 +87,9 @@ A</code></pre></div>
 <p>Get the eigenvalues and eigenvectors using <code>eigen()</code>; this returns a named list, with eigenvalues named <code>values</code> and eigenvectors named <code>vectors</code>. We call these <code>L</code> and <code>V</code> here, but in formulas they correspond to a diagonal matrix, <span class="math inline">\(\mathbf{\Lambda} = diag(\lambda_1, \lambda_2, \lambda_3)\)</span>, and a (orthogonal) matrix <span class="math inline">\(\mathbf{V}\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ev &lt;-<span class="st"> </span><span class="kw">eigen</span>(A)
 <span class="co"># extract components</span>
-(L &lt;-<span class="st"> </span>ev$values)</code></pre></div>
+(L &lt;-<span class="st"> </span>ev<span class="op">$</span>values)</code></pre></div>
 <pre><code>## [1] 17  8  7</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(V &lt;-<span class="st"> </span>ev$vectors)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(V &lt;-<span class="st"> </span>ev<span class="op">$</span>vectors)</code></pre></div>
 <pre><code>##         [,1]    [,2]   [,3]
 ## [1,]  0.7454  0.6667 0.0000
 ## [2,] -0.5963  0.6667 0.4472
@@ -100,7 +100,7 @@ A</code></pre></div>
 <ol style="list-style-type: decimal">
 <li>Factorization of A: A = V diag(L) V’. That is, the matrix <span class="math inline">\(\mathbf{A}\)</span> can be represented as the product <span class="math inline">\(\mathbf{A}= \mathbf{V} \mathbf{\Lambda} \mathbf{V}'\)</span>.</li>
 </ol>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">V %*%<span class="st"> </span><span class="kw">diag</span>(L) %*%<span class="st"> </span><span class="kw">t</span>(V)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">V <span class="op">%*%</span><span class="st"> </span><span class="kw">diag</span>(L) <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(V)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   13   -4    2
 ## [2,]   -4   11   -2
@@ -113,7 +113,7 @@ A</code></pre></div>
 ## [1,]   17    0    0
 ## [2,]    0    8    0
 ## [3,]    0    0    7</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(<span class="kw">t</span>(V) %*%<span class="st"> </span>A %*%<span class="st"> </span>V)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(<span class="kw">t</span>(V) <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>V)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   17    0    0
 ## [2,]    0    8    0
@@ -122,42 +122,42 @@ A</code></pre></div>
 <div id="spectral-decomposition" class="section level2">
 <h2>Spectral decomposition</h2>
 <p>The basic idea here is that each eigenvalue–eigenvector pair generates a rank 1 matrix, <span class="math inline">\(\lambda_i \mathbf{v}_i \mathbf{v}_i '\)</span>, and these sum to the original matrix, <span class="math inline">\(\mathbf{A} = \sum_i \lambda_i \mathbf{v}_i \mathbf{v}_i '\)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A1 =<span class="st"> </span>L[<span class="dv">1</span>] *<span class="st"> </span>V[,<span class="dv">1</span>] %*%<span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">1</span>])
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A1 =<span class="st"> </span>L[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>V[,<span class="dv">1</span>] <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">1</span>])
 A1</code></pre></div>
 <pre><code>##        [,1]   [,2]   [,3]
 ## [1,]  9.444 -7.556  3.778
 ## [2,] -7.556  6.044 -3.022
 ## [3,]  3.778 -3.022  1.511</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A2 =<span class="st"> </span>L[<span class="dv">2</span>] *<span class="st"> </span>V[,<span class="dv">2</span>] %*%<span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">2</span>])
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A2 =<span class="st"> </span>L[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>V[,<span class="dv">2</span>] <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">2</span>])
 A2</code></pre></div>
 <pre><code>##        [,1]   [,2]    [,3]
 ## [1,]  3.556  3.556 -1.7778
 ## [2,]  3.556  3.556 -1.7778
 ## [3,] -1.778 -1.778  0.8889</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A3 =<span class="st"> </span>L[<span class="dv">3</span>] *<span class="st"> </span>V[,<span class="dv">3</span>] %*%<span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">3</span>])
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A3 =<span class="st"> </span>L[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span>V[,<span class="dv">3</span>] <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(V[,<span class="dv">3</span>])
 A3</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    0  0.0  0.0
 ## [2,]    0  1.4  2.8
 ## [3,]    0  2.8  5.6</code></pre>
 <p>Then, summing them gives <code>A</code>, so they do decompose <code>A</code>:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A1 +<span class="st"> </span>A2 +<span class="st"> </span>A3</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A1 <span class="op">+</span><span class="st"> </span>A2 <span class="op">+</span><span class="st"> </span>A3</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   13   -4    2
 ## [2,]   -4   11   -2
 ## [3,]    2   -2    8</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">all.equal</span>(A, A1+A2+A3)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">all.equal</span>(A, A1<span class="op">+</span>A2<span class="op">+</span>A3)</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 <div id="further-properties" class="section level3">
 <h3>Further properties</h3>
 <ol style="list-style-type: decimal">
 <li>Sum of squares of A = sum of sum of squares of A1, A2, A3</li>
 </ol>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(A^<span class="dv">2</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(A<span class="op">^</span><span class="dv">2</span>)</code></pre></div>
 <pre><code>## [1] 402</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>( <span class="kw">sum</span>(A1^<span class="dv">2</span>), <span class="kw">sum</span>(A2^<span class="dv">2</span>), <span class="kw">sum</span>(A3^<span class="dv">2</span>) )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>( <span class="kw">sum</span>(A1<span class="op">^</span><span class="dv">2</span>), <span class="kw">sum</span>(A2<span class="op">^</span><span class="dv">2</span>), <span class="kw">sum</span>(A3<span class="op">^</span><span class="dv">2</span>) )</code></pre></div>
 <pre><code>## [1] 289  64  49</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>( <span class="kw">sum</span>(A1^<span class="dv">2</span>), <span class="kw">sum</span>(A2^<span class="dv">2</span>), <span class="kw">sum</span>(A3^<span class="dv">2</span>) )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>( <span class="kw">sum</span>(A1<span class="op">^</span><span class="dv">2</span>), <span class="kw">sum</span>(A2<span class="op">^</span><span class="dv">2</span>), <span class="kw">sum</span>(A3<span class="op">^</span><span class="dv">2</span>) )</code></pre></div>
 <pre><code>## [1] 402</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#' same as tr(A' A)</span>
 <span class="kw">tr</span>(<span class="kw">crossprod</span>(A))</code></pre></div>
@@ -165,23 +165,23 @@ A3</code></pre></div>
 <ol start="2" style="list-style-type: decimal">
 <li>Each squared eigenvalue gives the sum of squares accounted for by the latent vector</li>
 </ol>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">L^<span class="dv">2</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">L<span class="op">^</span><span class="dv">2</span></code></pre></div>
 <pre><code>## [1] 289  64  49</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cumsum</span>(L^<span class="dv">2</span>)   <span class="co"># cumulative</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cumsum</span>(L<span class="op">^</span><span class="dv">2</span>)   <span class="co"># cumulative</span></code></pre></div>
 <pre><code>## [1] 289 353 402</code></pre>
 <ol start="3" style="list-style-type: decimal">
 <li>The first <span class="math inline">\(i\)</span> eigenvalues and vectors give a rank <span class="math inline">\(i\)</span> approximation to <code>A</code></li>
 </ol>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A1)</code></pre></div>
 <pre><code>## [1] 1</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A1 +<span class="st"> </span>A2)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A1 <span class="op">+</span><span class="st"> </span>A2)</code></pre></div>
 <pre><code>## [1] 2</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A1 +<span class="st"> </span>A2 +<span class="st"> </span>A3)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A1 <span class="op">+</span><span class="st"> </span>A2 <span class="op">+</span><span class="st"> </span>A3)</code></pre></div>
 <pre><code>## [1] 3</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># two dimensions</span>
-<span class="kw">sum</span>((A1+A2)^<span class="dv">2</span>)</code></pre></div>
+<span class="kw">sum</span>((A1<span class="op">+</span>A2)<span class="op">^</span><span class="dv">2</span>)</code></pre></div>
 <pre><code>## [1] 353</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>((A1+A2)^<span class="dv">2</span>) /<span class="st"> </span><span class="kw">sum</span>(A^<span class="dv">2</span>)   <span class="co"># proportion</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>((A1<span class="op">+</span>A2)<span class="op">^</span><span class="dv">2</span>) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(A<span class="op">^</span><span class="dv">2</span>)   <span class="co"># proportion</span></code></pre></div>
 <pre><code>## [1] 0.8781</code></pre>
 </div>
 </div>
@@ -193,7 +193,7 @@ A3</code></pre></div>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

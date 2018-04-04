@@ -2,8 +2,8 @@
 % Please edit documentation in R/regvec3d.R
 \name{plot.regvec3d}
 \alias{plot.regvec3d}
-\alias{print.regvec3d}
 \alias{summary.regvec3d}
+\alias{print.regvec3d}
 \title{Plot method for regvec3d objects}
 \usage{
 \method{plot}{regvec3d}(x, y, dimension = 3, col = c("black", "red", "blue",
@@ -23,7 +23,9 @@
 
 \item{dimension}{Number of dimensions to plot: \code{3} (default) or \code{2}}
 
-\item{col}{A vector of 5 colors}
+\item{col}{A vector of 5 colors. \code{col[1]} is used for the y and residual (e) vectors, and for x1 and x2;
+\code{col[2]} is used for the vectors \code{y -> yhat} and \code{y -> e};
+\code{col[3]} is used for the vectors \code{yhat -> b1} and \code{yhat -> b2};}
 
 \item{col.plane}{Color of the base plane in a 3D plot or axes in a 2D plot}
 
@@ -85,8 +87,8 @@ reasonably well if the variables are shown on commensurate scales, i.e., with
 either \code{scale=TRUE} or \code{normalize=TRUE}.
 }
 \examples{
-if (require(car)) {
-   data("Duncan", package="car")
+if (require(carData)) {
+   data("Duncan", package="carData")
    dunc.reg <- regvec3d(prestige ~ income + education, data=Duncan)
    plot(dunc.reg)
    plot(dunc.reg, dimension=2)
@@ -94,7 +96,8 @@ if (require(car)) {
    summary(dunc.reg)
 
    # Example showing Simpson's paradox
-   states.vec <- regvec3d(SATM ~ pay + percent, data=car::States, scale=TRUE)
+   data("States", package="carData")
+   states.vec <- regvec3d(SATM ~ pay + percent, data=States, scale=TRUE)
    plot(states.vec, show.marginal=TRUE)
    plot(states.vec, show.marginal=TRUE, dimension=2)
    summary(states.vec)
@@ -108,8 +111,7 @@ Fox, J. (2016). \emph{Applied Regression Analysis and Generalized Linear Models}
 
 Other vector diagrams: \code{\link{Proj}},
   \code{\link{arc}}, \code{\link{arrows3d}},
-  \code{\link{corner}}, \code{\link{point_on_line}},
+  \code{\link{corner}}, \code{\link{pointOnLine}},
   \code{\link{regvec3d}}, \code{\link{vectors3d}},
   \code{\link{vectors}}
 }
-

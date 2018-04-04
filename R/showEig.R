@@ -14,7 +14,7 @@
 #' @param add         logical; should this call add to an existing plot?
 #' @param ...         other arguments passed to \code{link[car]{dataEllipse}}
 #' @author Michael Friendly
-#' @seealso \code{link[car]{dataEllipse}}
+#' @seealso \code{\link[car]{dataEllipse}}
 #' @importFrom car dataEllipse
 #' @export
 #' @examples
@@ -24,7 +24,7 @@
 #' showEig(X)
 #'
 #' # Duncan data
-#' data(Duncan, package="car")
+#' data(Duncan, package="carData")
 #' showEig(Duncan[, 2:3], levels=0.68)
 #' showEig(Duncan[,2:3], levels=0.68, robust=TRUE, add=TRUE, fill=TRUE)
 
@@ -50,7 +50,7 @@ showEig <-
 	n <- dim(X)[1]
 	mu <- colMeans(X)
 	Sigma <- var(X)
-	ev <-eig(Sigma)
+	ev <-Eigen(Sigma)
 	vals <- ev$values
 	vecs <- ev$vectors
 	r <- cor(X[,1], X[,2])

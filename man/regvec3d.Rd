@@ -2,8 +2,8 @@
 % Please edit documentation in R/regvec3d.R
 \name{regvec3d}
 \alias{regvec3d}
-\alias{regvec3d.default}
 \alias{regvec3d.formula}
+\alias{regvec3d.default}
 \title{Vector space representation of a two-variable regression model}
 \usage{
 regvec3d(x1, ...)
@@ -105,15 +105,19 @@ either \code{scale=TRUE} or \code{normalize=TRUE}.
 
 \item \code{default}: Default method for regvec3d
 }}
+
 \examples{
 library(rgl)
 therapy.vec <- regvec3d(therapy ~ perstest + IE, data=therapy)
 therapy.vec
-plot(therapy.vec)
-plot(therapy.vec, dimension="2")
+plot(therapy.vec, col.plane="darkgreen")
+plot(therapy.vec, dimension=2)
 }
 \references{
 Fox, J. (2016). \emph{Applied Regression Analysis and Generalized Linear Models}, 3rd ed., Sage, Chapter 10.
+
+Fox, J. and Friendly, M. (2016). "Visualizing Simultaneous Linear Equations, Geometric Vectors, and
+Least-Squares Regression with the matlib Package for R". \emph{useR Conference}, Stanford, CA, June 27 - June 30, 2016.
 }
 \seealso{
 \code{\link{plot.regvec3d}}
@@ -121,7 +125,6 @@ Fox, J. (2016). \emph{Applied Regression Analysis and Generalized Linear Models}
 Other vector diagrams: \code{\link{Proj}},
   \code{\link{arc}}, \code{\link{arrows3d}},
   \code{\link{corner}}, \code{\link{plot.regvec3d}},
-  \code{\link{point_on_line}}, \code{\link{vectors3d}},
+  \code{\link{pointOnLine}}, \code{\link{vectors3d}},
   \code{\link{vectors}}
 }
-

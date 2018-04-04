@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly" />
 
-<meta name="date" content="2016-09-16" />
+<meta name="date" content="2018-04-04" />
 
 <title>Generalized inverse</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Generalized inverse</h1>
 <h4 class="author"><em>Michael Friendly</em></h4>
-<h4 class="date"><em>2016-09-16</em></h4>
+<h4 class="date"><em>2018-04-04</em></h4>
 
 
 
@@ -79,9 +79,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>A common use of the pseudoinverse is to compute a ‘best fit’ (least squares) solution to a system of linear equations that lacks a unique solution.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(matlib)</code></pre></div>
 <p>Construct a square, <em>singular</em> matrix [See: Timm, EX. 1.7.3]</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, -<span class="dv">2</span>,
-             <span class="dv">4</span>, <span class="dv">4</span>, -<span class="dv">2</span>,
-            -<span class="dv">2</span>, -<span class="dv">2</span>, <span class="dv">10</span>), <span class="dt">nrow=</span><span class="dv">3</span>, <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="op">-</span><span class="dv">2</span>,
+             <span class="dv">4</span>, <span class="dv">4</span>, <span class="op">-</span><span class="dv">2</span>,
+            <span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">2</span>, <span class="dv">10</span>), <span class="dt">nrow=</span><span class="dv">3</span>, <span class="dt">ncol=</span><span class="dv">3</span>, <span class="dt">byrow=</span><span class="ot">TRUE</span>)
 <span class="kw">det</span>(A)</code></pre></div>
 <pre><code>## [1] 0</code></pre>
 <p>The rank is 2, so <code>inv(A)</code> wont work</p>
@@ -112,25 +112,25 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The generalized inverse is defined as the matrix <span class="math inline">\(A^-\)</span> such that</p>
 <ul>
 <li><span class="math inline">\(A * A^- * A = A\)</span> and</li>
-<li><span class="math inline">\(A^- * A * A^- = A\)</span></li>
+<li><span class="math inline">\(A^- * A * A^- = A^-\)</span></li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A %*%<span class="st"> </span>AI %*%<span class="st"> </span>A</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A <span class="op">%*%</span><span class="st"> </span>AI <span class="op">%*%</span><span class="st"> </span>A</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    4    4   -2
 ## [2,]    4    4   -2
 ## [3,]   -2   -2   10</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI %*%<span class="st"> </span>A %*%<span class="st"> </span>AI</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>AI</code></pre></div>
 <pre><code>##         [,1] [,2]    [,3]
 ## [1,] 0.27778    0 0.05556
 ## [2,] 0.00000    0 0.00000
 ## [3,] 0.05556    0 0.11111</code></pre>
 <p>In addition, both <span class="math inline">\(A * A^-\)</span> and <span class="math inline">\(A^- * A\)</span> are symmetric, but neither product gives an identity matrix, <code>A %*% AI != AI %*% A != I</code></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(A %*%<span class="st"> </span>AI)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(A <span class="op">%*%</span><span class="st"> </span>AI)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    1    0    0
 ## [2,]    1    0    0
 ## [3,]    0    0    1</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(AI %*%<span class="st"> </span>A)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(AI <span class="op">%*%</span><span class="st"> </span>A)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    1    1    0
 ## [2,]    0    0    0
@@ -149,7 +149,7 @@ A</code></pre></div>
 <p>This <span class="math inline">\(4 \times 3\)</span> matrix is not of full rank, because columns 2 and 3 sum to column 1.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">R</span>(A)</code></pre></div>
 <pre><code>## [1] 2</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(AA &lt;-<span class="st"> </span><span class="kw">t</span>(A) %*%<span class="st"> </span>A)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(AA &lt;-<span class="st"> </span><span class="kw">t</span>(A) <span class="op">%*%</span><span class="st"> </span>A)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    4    2    2
 ## [2,]    2    2    0
@@ -160,15 +160,15 @@ A</code></pre></div>
 ## [2,] -0.5  1.0    0
 ## [3,]  0.0  0.0    0</code></pre>
 <p>The generalized inverse of <span class="math inline">\(A\)</span> is <span class="math inline">\((A^{T} A)^- A^{T}\)</span>, <code>AAI * t(A)</code></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI &lt;-<span class="st"> </span>AAI  %*%<span class="st">  </span><span class="kw">t</span>(A)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI &lt;-<span class="st"> </span>AAI  <span class="op">%*%</span><span class="st">  </span><span class="kw">t</span>(A)</code></pre></div>
 <p>Show that it is a generalized inverse:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A %*%<span class="st"> </span>AI %*%<span class="st"> </span>A</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">A <span class="op">%*%</span><span class="st"> </span>AI <span class="op">%*%</span><span class="st"> </span>A</code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]    1    1    0
 ## [2,]    1    1    0
 ## [3,]    1    0    1
 ## [4,]    1    0    1</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI %*%<span class="st"> </span>A %*%<span class="st"> </span>AI</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AI <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>AI</code></pre></div>
 <pre><code>##      [,1] [,2] [,3] [,4]
 ## [1,]  0.0  0.0  0.5  0.5
 ## [2,]  0.5  0.5 -0.5 -0.5
@@ -182,7 +182,7 @@ A</code></pre></div>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

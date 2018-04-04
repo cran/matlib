@@ -21,7 +21,7 @@ the longest vector is used to scale the arrow heads}
 \item{radius}{radius of the base of the arrow heads}
 
 \item{labels}{a logical or a character vector of labels for the vectors. If \code{TRUE} and \code{X} is a matrix,
-labels are taken from \code{rownames(X)}. If \code{NULL}, no labels are drawn.}
+labels are taken from \code{rownames(X)}. If \code{FALSE} or \code{NULL}, no labels are drawn.}
 
 \item{cex.lab}{character expansion applied to vector labels. May be a number or numeric vector corresponding to the the
 rows of \code{X}, recycled as necessary.}
@@ -46,6 +46,7 @@ specified as rows of a matrix, and can draw labels on the vectors.
 
 At present, the color (\code{color=}) argument is not handled as expected when more than one vector is to be drawn.
 }
+
 \examples{
 vec <- rbind(diag(3), c(1,1,1))
 rownames(vec) <- c("X", "Y", "Z", "J")
@@ -71,16 +72,15 @@ corner(p1, p4, p3, col="blue")
 
 rgl.bringtotop()
 }
-\author{
-Michael Friendly
-}
 \seealso{
 \code{\link{arrows3d}}, code{\link[rgl]{texts3d}}, code{\link[rgl]{rgl.material}}
 
 Other vector diagrams: \code{\link{Proj}},
   \code{\link{arc}}, \code{\link{arrows3d}},
   \code{\link{corner}}, \code{\link{plot.regvec3d}},
-  \code{\link{point_on_line}}, \code{\link{regvec3d}},
+  \code{\link{pointOnLine}}, \code{\link{regvec3d}},
   \code{\link{vectors}}
 }
-
+\author{
+Michael Friendly
+}

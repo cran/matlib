@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly" />
 
-<meta name="date" content="2016-09-16" />
+<meta name="date" content="2018-04-04" />
 
 <title>Gram-Schmidt Orthogonalization and Regression</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Gram-Schmidt Orthogonalization and Regression</h1>
 <h4 class="author"><em>Michael Friendly</em></h4>
-<h4 class="date"><em>2016-09-16</em></h4>
+<h4 class="date"><em>2018-04-04</em></h4>
 
 
 
@@ -81,18 +81,18 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>We use the <code>class</code> data set, but convert the character factor <code>sex</code> to a dummy (0/1) variable <code>male</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(matlib)
 <span class="kw">data</span>(class)
-class$male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(class$sex==<span class="st">&quot;M&quot;</span>)</code></pre></div>
+class<span class="op">$</span>male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(class<span class="op">$</span>sex<span class="op">==</span><span class="st">&quot;M&quot;</span>)</code></pre></div>
 <p>For later use in regression, we create a variable <code>IQ</code> as a response variable</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">class &lt;-<span class="st"> </span><span class="kw">transform</span>(class, 
-                   <span class="dt">IQ =</span> <span class="kw">round</span>(<span class="dv">20</span> +<span class="st"> </span>height +<span class="st"> </span><span class="dv">3</span>*age -.<span class="dv">1</span>*weight -<span class="dv">3</span>*male +<span class="st"> </span><span class="dv">10</span>*<span class="kw">rnorm</span>(<span class="kw">nrow</span>(class))))
+                   <span class="dt">IQ =</span> <span class="kw">round</span>(<span class="dv">20</span> <span class="op">+</span><span class="st"> </span>height <span class="op">+</span><span class="st"> </span><span class="dv">3</span><span class="op">*</span>age <span class="op">-</span>.<span class="dv">1</span><span class="op">*</span>weight <span class="op">-</span><span class="dv">3</span><span class="op">*</span>male <span class="op">+</span><span class="st"> </span><span class="dv">10</span><span class="op">*</span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(class))))
 <span class="kw">head</span>(class)</code></pre></div>
 <pre><code>##         sex age height weight male  IQ
-## Alfred    M  14   69.0  112.5    1 119
-## Alice     F  13   56.5   84.0    0 104
-## Barbara   F  13   65.3   98.0    0 110
-## Carol     F  14   62.8  102.5    0 107
-## Henry     M  14   63.5  102.5    1 117
-## James     M  12   57.3   83.0    1 118</code></pre>
+## Alfred    M  14   69.0  112.5    1 117
+## Alice     F  13   56.5   84.0    0 113
+## Barbara   F  13   65.3   98.0    0 115
+## Carol     F  14   62.8  102.5    0  98
+## Henry     M  14   63.5  102.5    1 126
+## James     M  12   57.3   83.0    1  94</code></pre>
 <p>Reorder the predictors we want, forming a numeric matrix, <code>X</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(class[,<span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">2</span>,<span class="dv">5</span>)])
 <span class="kw">head</span>(X)</code></pre></div>
@@ -108,18 +108,18 @@ class$male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(clas
 <h2>Orthogonalization by projections</h2>
 <p>The Gram-Schmidt process treats the variables in a given order, according to the columns in <code>X</code>. We start with a new matrix <code>Z</code> consisting of <code>X[,1]</code>. Then, find a new variable <code>Z[,2]</code> orthogonal to <code>Z[,1]</code> by subtracting the projection of <code>X[,2]</code> on <code>Z[,1]</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z &lt;-<span class="st"> </span><span class="kw">cbind</span>(X[,<span class="dv">1</span>], <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>)
-Z[,<span class="dv">2</span>] &lt;-<span class="st"> </span>X[,<span class="dv">2</span>] -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">2</span>], Z[,<span class="dv">1</span>])
+Z[,<span class="dv">2</span>] &lt;-<span class="st"> </span>X[,<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">2</span>], Z[,<span class="dv">1</span>])
 <span class="kw">crossprod</span>(Z[,<span class="dv">1</span>], Z[,<span class="dv">2</span>])     <span class="co"># verify orthogonality</span></code></pre></div>
 <pre><code>##           [,1]
 ## [1,] 7.276e-12</code></pre>
 <p>Continue in the same way, subtracting the projections of <code>X[,3]</code> on the previous columns, and so forth</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z[,<span class="dv">3</span>] &lt;-<span class="st"> </span>X[,<span class="dv">3</span>] -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">3</span>], Z[,<span class="dv">1</span>]) -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">3</span>], Z[,<span class="dv">2</span>]) 
-Z[,<span class="dv">4</span>] &lt;-<span class="st"> </span>X[,<span class="dv">4</span>] -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">1</span>]) -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">2</span>]) -<span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">3</span>])</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z[,<span class="dv">3</span>] &lt;-<span class="st"> </span>X[,<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">3</span>], Z[,<span class="dv">1</span>]) <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">3</span>], Z[,<span class="dv">2</span>]) 
+Z[,<span class="dv">4</span>] &lt;-<span class="st"> </span>X[,<span class="dv">4</span>] <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">1</span>]) <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">2</span>]) <span class="op">-</span><span class="st"> </span><span class="kw">Proj</span>(X[,<span class="dv">4</span>], Z[,<span class="dv">3</span>])</code></pre></div>
 <p>Note that if any column of <code>X</code> is a linear combination of the previous columns, the corresponding column of <code>Z</code> will be all zeros.</p>
 <p>These computations are similar to the following set of linear regressions:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">z2 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">2</span>] ~<span class="st"> </span>X[,<span class="dv">1</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)
-z3 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">3</span>] ~<span class="st"> </span>X[,<span class="dv">1</span>:<span class="dv">2</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)
-z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">4</span>] ~<span class="st"> </span>X[,<span class="dv">1</span>:<span class="dv">3</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">z2 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">2</span>] <span class="op">~</span><span class="st"> </span>X[,<span class="dv">1</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)
+z3 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">3</span>] <span class="op">~</span><span class="st"> </span>X[,<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)
+z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="kw">lm</span>(X[,<span class="dv">4</span>] <span class="op">~</span><span class="st"> </span>X[,<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>]), <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)</code></pre></div>
 <p>The columns of <code>Z</code> are now orthogonal, but not of unit length,</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">zapsmall</span>(<span class="kw">crossprod</span>(Z))     <span class="co"># check orthogonality</span></code></pre></div>
 <pre><code>##       [,1] [,2] [,3] [,4]
@@ -128,7 +128,7 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 ## [3,]     0    0    7    0
 ## [4,]     0    0    0    2</code></pre>
 <p>We make standardize column to unit length, giving <code>Z</code> as an <strong>orthonormal</strong> matrix, such that <span class="math inline">\(Z' Z = I\)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z &lt;-<span class="st"> </span>Z %*%<span class="st"> </span><span class="kw">diag</span>(<span class="dv">1</span> /<span class="st"> </span><span class="kw">len</span>(Z))    <span class="co"># make each column unit length</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z &lt;-<span class="st"> </span>Z <span class="op">%*%</span><span class="st"> </span><span class="kw">diag</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="kw">len</span>(Z))    <span class="co"># make each column unit length</span>
 <span class="kw">zapsmall</span>(<span class="kw">crossprod</span>(Z))         <span class="co"># check orthonormal</span></code></pre></div>
 <pre><code>##      [,1] [,2] [,3] [,4]
 ## [1,]    1    0    0    0
@@ -138,7 +138,7 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">colnames</span>(Z) &lt;-<span class="st"> </span><span class="kw">colnames</span>(X)</code></pre></div>
 <div id="relationship-to-qr-factorization" class="section level3">
 <h3>Relationship to QR factorization</h3>
-<p>The QR method uses essentially the same process, factoring the matrix <span class="math inline">\(\mathbf{X}\)</span> as <span class="math inline">\(\mathbf{X = Q R}\)</span>, where <span class="math inline">\(\mathbf{Q}\)</span> is the orthonormal matrix corresponding to <code>Z</code> and <span class="math inline">\(\mathbf{R}\)</span> is upper triangualar. However, the signs of the columns of <span class="math inline">\(\mathbf{Q}\)</span> are arbitrary, and <code>QR()</code> returns <code>QR(X)$Q</code> with signs reversed, compared to <code>Z</code>.</p>
+<p>The QR method uses essentially the same process, factoring the matrix <span class="math inline">\(\mathbf{X}\)</span> as <span class="math inline">\(\mathbf{X = Q R}\)</span>, where <span class="math inline">\(\mathbf{Q}\)</span> is the orthonormal matrix corresponding to <code>Z</code> and <span class="math inline">\(\mathbf{R}\)</span> is an upper triangular matrix. However, the signs of the columns of <span class="math inline">\(\mathbf{Q}\)</span> are arbitrary, and <code>QR()</code> returns <code>QR(X)$Q</code> with signs reversed, compared to <code>Z</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># same result as QR(X)$Q, but with signs reversed</span>
 <span class="kw">head</span>(Z, <span class="dv">5</span>)</code></pre></div>
 <pre><code>##         height   weight     age     male
@@ -147,14 +147,14 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 ## Barbara 0.2714 -0.07715 -0.3862 -0.45170
 ## Carol   0.2610  0.07058  0.1559 -0.20548
 ## Henry   0.2639  0.05132  0.1047  0.40538</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(-<span class="kw">QR</span>(X)$Q, <span class="dv">5</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(<span class="op">-</span><span class="kw">QR</span>(X)<span class="op">$</span>Q, <span class="dv">5</span>)</code></pre></div>
 <pre><code>##        [,1]     [,2]    [,3]     [,4]
 ## [1,] 0.2868  0.07545 -0.3687  0.12456
 ## [2,] 0.2348 -0.08067  0.3569 -0.02177
 ## [3,] 0.2714 -0.07715 -0.3862 -0.45170
 ## [4,] 0.2610  0.07058  0.1559 -0.20548
 ## [5,] 0.2639  0.05132  0.1047  0.40538</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">all.equal</span>( <span class="kw">unname</span>(Z), -<span class="kw">QR</span>(X)$Q )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">all.equal</span>( <span class="kw">unname</span>(Z), <span class="op">-</span><span class="kw">QR</span>(X)<span class="op">$</span>Q )</code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 </div>
@@ -166,33 +166,33 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
 <li>Residuals are the same</li>
 <li>The Type I tests given by <code>anova()</code> are the same.</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">class2 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(Z, <span class="dt">IQ=</span>class$IQ)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">class2 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(Z, <span class="dt">IQ=</span>class<span class="op">$</span>IQ)</code></pre></div>
 <p>Regression of IQ on the original variables in <code>X</code></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mod1 &lt;-<span class="st"> </span><span class="kw">lm</span>(IQ ~<span class="st"> </span>height +<span class="st"> </span>weight +<span class="st"> </span>age +<span class="st"> </span>male, <span class="dt">data=</span>class)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mod1 &lt;-<span class="st"> </span><span class="kw">lm</span>(IQ <span class="op">~</span><span class="st"> </span>height <span class="op">+</span><span class="st"> </span>weight <span class="op">+</span><span class="st"> </span>age <span class="op">+</span><span class="st"> </span>male, <span class="dt">data=</span>class)
 <span class="kw">anova</span>(mod1)</code></pre></div>
 <pre><code>## Analysis of Variance Table
 ## 
 ## Response: IQ
-##           Df Sum Sq Mean Sq F value Pr(&gt;F)   
-## height     1    600     600   13.07 0.0047 **
-## weight     1     10      10    0.22 0.6497   
-## age        1    132     132    2.88 0.1203   
-## male       1     39      39    0.84 0.3807   
-## Residuals 10    459      46                  
+##           Df Sum Sq Mean Sq F value Pr(&gt;F)  
+## height     1    634     634    6.60  0.028 *
+## weight     1      4       4    0.04  0.840  
+## age        1    339     339    3.53  0.090 .
+## male       1     11      11    0.12  0.737  
+## Residuals 10    960      96                 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>Regression of IQ on the orthogonalized variables in <code>Z</code></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mod2 &lt;-<span class="st"> </span><span class="kw">lm</span>(IQ ~<span class="st"> </span>height +<span class="st"> </span>weight +<span class="st"> </span>age +<span class="st"> </span>male, <span class="dt">data=</span>class2)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mod2 &lt;-<span class="st"> </span><span class="kw">lm</span>(IQ <span class="op">~</span><span class="st"> </span>height <span class="op">+</span><span class="st"> </span>weight <span class="op">+</span><span class="st"> </span>age <span class="op">+</span><span class="st"> </span>male, <span class="dt">data=</span>class2)
 <span class="kw">anova</span>(mod2)</code></pre></div>
 <pre><code>## Analysis of Variance Table
 ## 
 ## Response: IQ
-##           Df Sum Sq Mean Sq F value Pr(&gt;F)   
-## height     1    600     600   13.07 0.0047 **
-## weight     1     10      10    0.22 0.6497   
-## age        1    132     132    2.88 0.1203   
-## male       1     39      39    0.84 0.3807   
-## Residuals 10    459      46                  
+##           Df Sum Sq Mean Sq F value Pr(&gt;F)  
+## height     1    634     634    6.60  0.028 *
+## weight     1      4       4    0.04  0.840  
+## age        1    339     339    3.53  0.090 .
+## male       1     11      11    0.12  0.737  
+## Residuals 10    960      96                 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>This illustrates that <code>anova()</code> tests for linear models are <em>sequential</em> tests. They test hypotheses about the extra contribution of each variable over and above all previous ones, in a given order. These usually do not make substantive sense, except in testing ordered (“hierarchical”) models.</p>
@@ -205,7 +205,7 @@ z4 &lt;-<span class="st"> </span><span class="kw">residuals</span>(<span class="
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

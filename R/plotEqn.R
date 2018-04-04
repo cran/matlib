@@ -23,7 +23,10 @@
 #' @return nothing; used for the side effect of making a plot
 #'
 #' @author Michael Friendly
+#' @references Fox, J. and Friendly, M. (2016). "Visualizing Simultaneous Linear Equations, Geometric Vectors, and
+#' Least-Squares Regression with the matlib Package for R". \emph{useR Conference}, Stanford, CA, June 27 - June 30, 2016.
 #' @importFrom graphics abline lines plot text points
+#' @export
 #' @seealso \code{\link{showEqn}}
 
 #' @examples
@@ -124,9 +127,15 @@ plotEqn <- function(A, b, vars, xlim=c(-4, 4), ylim,
 #' @param alpha transparency applied to each plane
 #' @param labels logical, or a vector of character labels for the equations; not yet implemented.
 #' @param solution logical; should the solution point for all equations be marked (if possible)
+#' @param axes logical; whether to frame the plot with coordinate axes
+#' @param lit logical, specifying if lighting calculation should take place on geometry; see \code{\link[rgl]{rgl.material}}
 #'
 #' @return nothing; used for the side effect of making a plot
 #'
+#' @author Michael Friendly, John Fox
+#' @references Fox, J. and Friendly, M. (2016). "Visualizing Simultaneous Linear Equations, Geometric Vectors, and
+#' Least-Squares Regression with the matlib Package for R". \emph{useR Conference}, Stanford, CA, June 27 - June 30, 2016.
+#' @export
 #' @examples
 #' # three consistent equations in three unknowns
 #' A <- matrix(c(13, -4, 2, -4, 11, -2, 2, -2, 8), 3,3)
@@ -134,14 +143,9 @@ plotEqn <- function(A, b, vars, xlim=c(-4, 4), ylim,
 #' plotEqn3d(A,b)
 
 plotEqn3d <- function( A, b, vars, xlim=c(-2,2), ylim=c(-2,2), zlim,
-                       col=2:(nrow(A)+1), alpha=1, labels=FALSE, solution=TRUE)
+                       col=2:(nrow(A)+1), alpha=1, labels=FALSE, solution=TRUE,
+                       axes=TRUE, lit=FALSE)
 {
-
-  if (!requireNamespace("rgl", quietly = TRUE)) {
-    stop("rgl is needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-
   if (!is.numeric(A) || !is.matrix(A)) stop("A must be a numeric matrix")
   if (missing(b)) {
     b <- A[,ncol(A)]   # assume last column of Ab
@@ -175,9 +179,10 @@ plotEqn3d <- function( A, b, vars, xlim=c(-2,2), ylim=c(-2,2), zlim,
   # Create some dummy data
   dat <- replicate(2, 1:3)
   rgl::plot3d(dat, type = 'n', xlim = xlim, ylim = ylim, zlim = c(-3, 3),
-              xlab = vars[1], ylab = vars[2], zlab = vars[3])
+              xlab = vars[1], ylab = vars[2], zlab = vars[3],
+              axes=axes)
   # Add planes
-  rgl::planes3d(A[,1], A[,2], A[,3], -b, col=col, alpha=alpha)
+  rgl::planes3d(A[,1], A[,2], A[,3], -b, col=col, alpha=alpha, lit=lit)
 
   # show the solution??
   if (solution) {
