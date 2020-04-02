@@ -2,8 +2,8 @@ Package: matlib
 Type: Package
 Title: Matrix Functions for Teaching and Learning Linear Algebra and
         Multivariate Statistics
-Version: 0.9.2
-Date: 2019-05-12
+Version: 0.9.3
+Date: 2020-03-30
 Authors@R: c(person(given = "Michael", family = "Friendly", role=c("aut", "cre"), email="friendly@yorku.ca",
              comment=c(ORCID="0000-0002-3237-0941")),
             person(given = "John", family = "Fox", role="aut"),
@@ -26,14 +26,14 @@ LazyData: TRUE
 Suggests: knitr, rglwidget, rmarkdown, carData
 Imports: xtable, MASS, rgl, car, methods
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2019-05-29 16:24:15 UTC; Friendly
+Packaged: 2020-04-02 18:33:25 UTC; friendly
 Author: Michael Friendly [aut, cre] (<https://orcid.org/0000-0002-3237-0941>),
   John Fox [aut],
   Phil Chalmers [aut],
   Georges Monette [ctb],
   Gaston Sanchez [ctb]
 Repository: CRAN
-Date/Publication: 2019-05-29 17:10:07 UTC
+Date/Publication: 2020-04-02 19:20:02 UTC
