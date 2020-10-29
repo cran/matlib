@@ -1,3 +1,10 @@
+# matlib 0.9.4
+
+- added `xprod()` for vector cross-product
+- added data-beta vignette
+- fix `sprintf` warning from LU [Phil Chalmers]
+- better plotting of planes in plotEqn3d, alpha=0.9
+
 # matlib 0.9.3
 
 - `gaussianElimination()` and friends now handle one-row or one-column matrices [suggestion of Jana Jarecki]
