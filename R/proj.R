@@ -21,7 +21,14 @@
 #' Proj(y, X[,2])
 #' Proj(y, X)
 #'
+#' # project unit vector on line between two points
+#' y <- c(1,1)
+#' p1 <- c(0,0)
+#' p2 <- c(1,0)
+#' Proj(y, cbind(p1, p2))
+#'
 #' # orthogonal complements
+#' y <- 1:4
 #' yp <-Proj(y, X, list=TRUE)
 #' yp$y
 #' P <- yp$P
