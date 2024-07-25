@@ -1,3 +1,15 @@
+# matlib 0.9.8
+
+- added `circle()` for drawing circles in diagrams
+- `vectors()` now handles 0-length vectors more gracefully #50.
+- `matrix2latex()` generalized to allow different bracket types and optionally show the size of the matrix.
+
+# matlib 0.9.7
+
+- `inv()` and aliases now return invisible matrix when `verbose = TRUE` to match behaviour of related functions (e.g., `gaussianElimination()`)
+- `GramSchmidt()` gains an argument, `omit_zero_columns` to control whether all-zero columns are retained in the output (issue #48) [Thx: @ggrothendieck]
+- Merge pull request #49 from JF to retain column names in `GramSchmidt()`.
+
 # matlib 0.9.6
 
 - fix some subtle problems related to the use of `MASS::fractions()` in various display functions, #42. (Thx: Phil Chalmers)

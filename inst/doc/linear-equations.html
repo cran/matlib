@@ -12,7 +12,7 @@
 
 <meta name="author" content="Michael Friendly and John Fox" />
 
-<meta name="date" content="2022-12-08" />
+<meta name="date" content="2024-07-25" />
 
 <title>Solving Linear Equations</title>
 
@@ -318,20 +318,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
       document.body.style.height = "100%";
       document.documentElement.style.width = "100%";
       document.documentElement.style.height = "100%";
-      if (cel) {
-        cel.style.position = "absolute";
-        var pad = unpackPadding(sizing.padding);
-        cel.style.top = pad.top + "px";
-        cel.style.right = pad.right + "px";
-        cel.style.bottom = pad.bottom + "px";
-        cel.style.left = pad.left + "px";
-        el.style.width = "100%";
-        el.style.height = "100%";
-      }
+      cel.style.position = "absolute";
+      var pad = unpackPadding(sizing.padding);
+      cel.style.top = pad.top + "px";
+      cel.style.right = pad.right + "px";
+      cel.style.bottom = pad.bottom + "px";
+      cel.style.left = pad.left + "px";
+      el.style.width = "100%";
+      el.style.height = "100%";
 
       return {
-        getWidth: function() { return cel.offsetWidth; },
-        getHeight: function() { return cel.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
 
     } else {
@@ -339,8 +337,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
       el.style.height = px(sizing.height);
 
       return {
-        getWidth: function() { return el.offsetWidth; },
-        getHeight: function() { return el.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
     }
   }
@@ -564,8 +562,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
           elementData(el, "initialized", true);
           if (bindingDef.initialize) {
-            var result = bindingDef.initialize(el, el.offsetWidth,
-              el.offsetHeight);
+            var rect = el.getBoundingClientRect();
+            var result = bindingDef.initialize(el, rect.width, rect.height);
             elementData(el, "init_result", result);
           }
         }
@@ -607,29 +605,30 @@ document.addEventListener('DOMContentLoaded', function(e) {
       forEach(matches, function(el) {
         var sizeObj = initSizing(el, binding);
 
+        var getSize = function(el) {
+          if (sizeObj) {
+            return {w: sizeObj.getWidth(), h: sizeObj.getHeight()}
+          } else {
+            var rect = el.getBoundingClientRect();
+            return {w: rect.width, h: rect.height}
+          }
+        };
+
         if (hasClass(el, "html-widget-static-bound"))
           return;
         el.className = el.className + " html-widget-static-bound";
 
         var initResult;
         if (binding.initialize) {
-          initResult = binding.initialize(el,
-            sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          );
+          var size = getSize(el);
+          initResult = binding.initialize(el, size.w, size.h);
           elementData(el, "init_result", initResult);
         }
 
         if (binding.resize) {
-          var lastSize = {
-            w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          };
+          var lastSize = getSize(el);
           var resizeHandler = function(e) {
-            var size = {
-              w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-              h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-            };
+            var size = getSize(el);
             if (size.w === 0 && size.h === 0)
               return;
             if (size.w === lastSize.w && size.h === lastSize.h)
@@ -931,7 +930,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     return result;
   }
 })();
-
 </script>
 <script>/* el is the div, holding the rgl object as el.rglinstance,
      which holds x as el.rglinstance.scene
@@ -2149,7 +2147,8 @@ rglwidgetClass = function() {
       f.is_points = rglwidgetClass.isSet(flags, rglwidgetClass.f_is_points);
       f.is_transparent = rglwidgetClass.isSet(flags, rglwidgetClass.f_is_transparent);
       f.is_twosided = rglwidgetClass.isSet(flags, rglwidgetClass.f_is_twosided);
-      f.needs_vnormal = (f.is_lit && !f.fixed_quads && !f.is_brush) || (f.is_twosided && f.has_normals);
+      f.needs_vnormal = !rglwidgetClass.isSet(flags, rglwidgetClass.f_sprites_3d) &&
+        (f.is_lit && !f.fixed_quads && !f.is_brush) || (f.is_twosided && f.has_normals);
       f.rotating = rglwidgetClass.isSet(flags, rglwidgetClass.f_rotating);
       f.round_points = round_points;
       return f;
@@ -2173,7 +2172,9 @@ rglwidgetClass = function() {
      * @param  textype - texture type for object 
      * @param  antialias - use antialiasing?
      */
-    rglwidgetClass.getDefines = function(id, type, flags, nclipplanes, nlights, normals, pointSize, textype, antialias, fl) {
+    rglwidgetClass.getDefines = function(id, type, flags,
+      nclipplanes, nlights, normals, pointSize, textype,
+      texmode, texenvmap, antialias, fl) {
       var
         title, defines;
       
@@ -2203,6 +2204,9 @@ rglwidgetClass = function() {
       if (fl.has_texture) {
         defines = defines + "#define HAS_TEXTURE 1\n";
         defines = defines + "#define TEXTURE_" + textype + "\n";
+        defines = defines + "#define TEXMODE_" + texmode + "\n";
+        if (texenvmap)
+          defines = defines + "#define USE_ENVMAP 1\n";
       }
       
       if (fl.is_brush)
@@ -2260,16 +2264,18 @@ rglwidgetClass = function() {
         this.countClipplanes(), this.countLights(), 
         obj.normals, 
         this.getMaterial(obj, "size"), 
-        this.getMaterial(obj, "textype"), 
+        this.getMaterial(obj, "textype"),
+        this.getMaterial(obj, "texmode"),
+        this.getMaterial(obj, "texenvmap"),
         this.getMaterial(obj, "point_antialias"),
         obj.defFlags
       );
 
       if (typeof vertex === "undefined")
-        vertex = document.getElementById("rgl-vertex-shader").text;
+        vertex = rglwidgetClass.rgl_vertex_shader();
         
       if (typeof fragment === "undefined") 
-        fragment = document.getElementById("rgl-fragment-shader").text;
+        fragment = rglwidgetClass.rgl_fragment_shader();
 
 //      console.log("vertex:");
 //      console.log(header + vertex);
@@ -2297,6 +2303,462 @@ rglwidgetClass = function() {
         return shader;
     };
 
+</script>
+<script>rglwidgetClass.rgl_vertex_shader = function() {
+return  "#line 2 1\n"+
+"// File 1 is the vertex shader\n"+
+"#ifdef GL_ES\n"+
+"#ifdef GL_FRAGMENT_PRECISION_HIGH\n"+
+"precision highp float;\n"+
+"#else\n"+
+"precision mediump float;\n"+
+"#endif\n"+
+"#endif\n"+
+"\n"+
+"attribute vec3 aPos;\n"+
+"attribute vec4 aCol;\n"+
+"uniform mat4 mvMatrix;\n"+
+"uniform mat4 prMatrix;\n"+
+"varying vec4 vCol;\n"+
+"varying vec4 vPosition;\n"+
+"\n"+
+"#ifdef NEEDS_VNORMAL\n"+
+"attribute vec3 aNorm;\n"+
+"uniform mat4 normMatrix;\n"+
+"varying vec4 vNormal;\n"+
+"#endif\n"+
+"\n"+
+"#if defined(HAS_TEXTURE) || defined (IS_TEXT)\n"+
+"attribute vec2 aTexcoord;\n"+
+"varying vec2 vTexcoord;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef FIXED_SIZE\n"+
+"uniform vec3 textScale;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef FIXED_QUADS\n"+
+"attribute vec3 aOfs;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef IS_TWOSIDED\n"+
+"#ifdef HAS_NORMALS\n"+
+"varying float normz;\n"+
+"uniform mat4 invPrMatrix;\n"+
+"#else\n"+
+"attribute vec3 aPos1;\n"+
+"attribute vec3 aPos2;\n"+
+"varying float normz;\n"+
+"#endif\n"+
+"#endif // IS_TWOSIDED\n"+
+"\n"+
+"#ifdef FAT_LINES\n"+
+"attribute vec3 aNext;\n"+
+"attribute vec2 aPoint;\n"+
+"varying vec2 vPoint;\n"+
+"varying float vLength;\n"+
+"uniform float uAspect;\n"+
+"uniform float uLwd;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef USE_ENVMAP\n"+
+"varying vec3 vReflection;\n"+
+"#endif\n"+
+"\n"+
+"void main(void) {\n"+
+"  \n"+
+"#ifndef IS_BRUSH\n"+
+"#if defined(NCLIPPLANES) || !defined(FIXED_QUADS) || defined(HAS_FOG) || defined(USE_ENVMAP)\n"+
+"  vPosition = mvMatrix * vec4(aPos, 1.);\n"+
+"#endif\n"+
+"  \n"+
+"#ifndef FIXED_QUADS\n"+
+"  gl_Position = prMatrix * vPosition;\n"+
+"#endif\n"+
+"#endif // !IS_BRUSH\n"+
+"  \n"+
+"#ifdef IS_POINTS\n"+
+"  gl_PointSize = POINTSIZE;\n"+
+"#endif\n"+
+"  \n"+
+"  vCol = aCol;\n"+
+"  \n"+
+"// USE_ENVMAP implies NEEDS_VNORMAL\n"+
+"\n"+
+"#ifdef NEEDS_VNORMAL\n"+
+"  vNormal = normMatrix * vec4(-aNorm, dot(aNorm, aPos));\n"+
+"#endif\n"+
+"\n"+
+"#ifdef USE_ENVMAP\n"+
+"  vReflection = normalize(reflect(vPosition.xyz/vPosition.w, \n"+
+"                        normalize(vNormal.xyz/vNormal.w)));\n"+
+"#endif\n"+
+"  \n"+
+"#ifdef IS_TWOSIDED\n"+
+"#ifdef HAS_NORMALS\n"+
+"  /* normz should be calculated *after* projection */\n"+
+"  normz = (invPrMatrix*vNormal).z;\n"+
+"#else\n"+
+"  vec4 pos1 = prMatrix*(mvMatrix*vec4(aPos1, 1.));\n"+
+"  pos1 = pos1/pos1.w - gl_Position/gl_Position.w;\n"+
+"  vec4 pos2 = prMatrix*(mvMatrix*vec4(aPos2, 1.));\n"+
+"  pos2 = pos2/pos2.w - gl_Position/gl_Position.w;\n"+
+"  normz = pos1.x*pos2.y - pos1.y*pos2.x;\n"+
+"#endif\n"+
+"#endif // IS_TWOSIDED\n"+
+"  \n"+
+"#ifdef NEEDS_VNORMAL\n"+
+"  vNormal = vec4(normalize(vNormal.xyz), 1);\n"+
+"#endif\n"+
+"  \n"+
+"#if defined(HAS_TEXTURE) || defined(IS_TEXT)\n"+
+"  vTexcoord = aTexcoord;\n"+
+"#endif\n"+
+"  \n"+
+"#if defined(FIXED_SIZE) && !defined(ROTATING)\n"+
+"  vec4 pos = prMatrix * mvMatrix * vec4(aPos, 1.);\n"+
+"  pos = pos/pos.w;\n"+
+"  gl_Position = pos + vec4(aOfs*textScale, 0.);\n"+
+"#endif\n"+
+"  \n"+
+"#if defined(IS_SPRITES) && !defined(FIXED_SIZE)\n"+
+"  vec4 pos = mvMatrix * vec4(aPos, 1.);\n"+
+"  pos = pos/pos.w + vec4(aOfs,  0.);\n"+
+"  gl_Position = prMatrix*pos;\n"+
+"#endif\n"+
+"  \n"+
+"#ifdef FAT_LINES\n"+
+"  /* This code was inspired by Matt Deslauriers' code in \n"+
+"   https://mattdesl.svbtle.com/drawing-lines-is-hard */\n"+
+"  vec2 aspectVec = vec2(uAspect, 1.0);\n"+
+"  mat4 projViewModel = prMatrix * mvMatrix;\n"+
+"  vec4 currentProjected = projViewModel * vec4(aPos, 1.0);\n"+
+"  currentProjected = currentProjected/currentProjected.w;\n"+
+"  vec4 nextProjected = projViewModel * vec4(aNext, 1.0);\n"+
+"  vec2 currentScreen = currentProjected.xy * aspectVec;\n"+
+"  vec2 nextScreen = (nextProjected.xy / nextProjected.w) * aspectVec;\n"+
+"  float len = uLwd;\n"+
+"  vec2 dir = vec2(1.0, 0.0);\n"+
+"  vPoint = aPoint;\n"+
+"  vLength = length(nextScreen - currentScreen)/2.0;\n"+
+"  vLength = vLength/(vLength + len);\n"+
+"  if (vLength > 0.0) {\n"+
+"    dir = normalize(nextScreen - currentScreen);\n"+
+"  }\n"+
+"  vec2 normal = vec2(-dir.y, dir.x);\n"+
+"  dir.x /= uAspect;\n"+
+"  normal.x /= uAspect;\n"+
+"  vec4 offset = vec4(len*(normal*aPoint.x*aPoint.y - dir), 0.0, 0.0);\n"+
+"  gl_Position = currentProjected + offset;\n"+
+"#endif\n"+
+"  \n"+
+"#ifdef IS_BRUSH\n"+
+"  gl_Position = vec4(aPos, 1.);\n"+
+"#endif\n"+
+"}\n" ;};
+rglwidgetClass.rgl_fragment_shader = function() {
+return  "#line 2 2\n"+
+"// File 2 is the fragment shader\n"+
+"#ifdef GL_ES\n"+
+"#ifdef GL_FRAGMENT_PRECISION_HIGH\n"+
+"precision highp float;\n"+
+"#else\n"+
+"precision mediump float;\n"+
+"#endif\n"+
+"#endif\n"+
+"varying vec4 vCol; // carries alpha\n"+
+"varying vec4 vPosition;\n"+
+"#if defined(HAS_TEXTURE) || defined (IS_TEXT)\n"+
+"varying vec2 vTexcoord;\n"+
+"uniform sampler2D uSampler;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef HAS_FOG\n"+
+"uniform int uFogMode;\n"+
+"uniform vec3 uFogColor;\n"+
+"uniform vec4 uFogParms;\n"+
+"#endif\n"+
+"\n"+
+"#if defined(IS_LIT) && !defined(FIXED_QUADS)\n"+
+"varying vec4 vNormal;\n"+
+"#endif\n"+
+"\n"+
+"#if NCLIPPLANES > 0\n"+
+"uniform vec4 vClipplane[NCLIPPLANES];\n"+
+"#endif\n"+
+"\n"+
+"#if NLIGHTS > 0\n"+
+"uniform mat4 mvMatrix;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef IS_LIT\n"+
+"uniform vec3 emission;\n"+
+"uniform float shininess;\n"+
+"#if NLIGHTS > 0\n"+
+"uniform vec3 ambient[NLIGHTS];\n"+
+"uniform vec3 specular[NLIGHTS]; // light*material\n"+
+"uniform vec3 diffuse[NLIGHTS];\n"+
+"uniform vec3 lightDir[NLIGHTS];\n"+
+"uniform bool viewpoint[NLIGHTS];\n"+
+"uniform bool finite[NLIGHTS];\n"+
+"#endif\n"+
+"#endif // IS_LIT\n"+
+"\n"+
+"#ifdef IS_TWOSIDED\n"+
+"uniform bool front;\n"+
+"varying float normz;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef FAT_LINES\n"+
+"varying vec2 vPoint;\n"+
+"varying float vLength;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef USE_ENVMAP\n"+
+"varying vec3 vReflection;\n"+
+"#endif\n"+
+"\n"+
+"void main(void) {\n"+
+"  vec4 fragColor;\n"+
+"#ifdef FAT_LINES\n"+
+"  vec2 point = vPoint;\n"+
+"  bool neg = point.y < 0.0;\n"+
+"  point.y = neg ? (point.y + vLength)/(1.0 - vLength) :\n"+
+"                 -(point.y - vLength)/(1.0 - vLength);\n"+
+"#if defined(IS_TRANSPARENT) && defined(IS_LINESTRIP)\n"+
+"  if (neg && length(point) <= 1.0) discard;\n"+
+"#endif\n"+
+"  point.y = min(point.y, 0.0);\n"+
+"  if (length(point) > 1.0) discard;\n"+
+"#endif // FAT_LINES\n"+
+"  \n"+
+"#ifdef ROUND_POINTS\n"+
+"  vec2 coord = gl_PointCoord - vec2(0.5);\n"+
+"  if (length(coord) > 0.5) discard;\n"+
+"#endif\n"+
+"  \n"+
+"#if NCLIPPLANES > 0\n"+
+"  for (int i = 0; i < NCLIPPLANES; i++)\n"+
+"    if (dot(vPosition, vClipplane[i]) < 0.0) discard;\n"+
+"#endif\n"+
+"    \n"+
+"#ifdef FIXED_QUADS\n"+
+"    vec3 n = vec3(0., 0., 1.);\n"+
+"#elif defined(IS_LIT)\n"+
+"    vec3 n = normalize(vNormal.xyz);\n"+
+"#endif\n"+
+"    \n"+
+"#ifdef IS_TWOSIDED\n"+
+"    if ((normz <= 0.) != front) discard;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef IS_LIT\n"+
+"    vec3 eye = normalize(-vPosition.xyz/vPosition.w);\n"+
+"    vec3 lightdir;\n"+
+"    vec4 colDiff;\n"+
+"    vec3 halfVec;\n"+
+"    vec4 lighteffect = vec4(emission, 0.);\n"+
+"    vec3 col;\n"+
+"    float nDotL;\n"+
+"#ifdef FIXED_QUADS\n"+
+"    n = -faceforward(n, n, eye);\n"+
+"#endif\n"+
+"    \n"+
+"#if NLIGHTS > 0\n"+
+"    // Simulate two-sided lighting\n"+
+"    if (n.z < 0.0)\n"+
+"      n = -n;\n"+
+"    for (int i=0;i<NLIGHTS;i++) {\n"+
+"      colDiff = vec4(vCol.rgb * diffuse[i], vCol.a);\n"+
+"      lightdir = lightDir[i];\n"+
+"      if (!viewpoint[i]) {\n"+
+"        if (finite[i]) {\n"+
+"          lightdir = (mvMatrix * vec4(lightdir, 1.)).xyz;\n"+
+"        } else {\n"+
+"          lightdir = (mvMatrix * vec4(lightdir, 0.)).xyz;\n"+
+"        }\n"+
+"      }\n"+
+"      if (!finite[i]) {\n"+
+"        halfVec = normalize(lightdir + eye);\n"+
+"      } else {\n"+
+"        lightdir = normalize(lightdir - vPosition.xyz/vPosition.w);\n"+
+"        halfVec = normalize(lightdir + eye);\n"+
+"      }\n"+
+"      col = ambient[i];\n"+
+"      nDotL = dot(n, lightdir);\n"+
+"      col = col + max(nDotL, 0.) * colDiff.rgb;\n"+
+"      col = col + pow(max(dot(halfVec, n), 0.), shininess) * specular[i];\n"+
+"      lighteffect = lighteffect + vec4(col, colDiff.a);\n"+
+"    }\n"+
+"#endif\n"+
+"    \n"+
+"#else // not IS_LIT\n"+
+"    vec4 colDiff = vCol;\n"+
+"    vec4 lighteffect = colDiff;\n"+
+"#endif\n"+
+"    \n"+
+"#ifdef IS_TEXT\n"+
+"    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);\n"+
+"#endif\n"+
+"    \n"+
+"#ifdef HAS_TEXTURE\n"+
+"\n"+
+"// These calculations use the definitions from \n"+
+"// https://docs.gl/gl3/glTexEnv\n"+
+"\n"+
+"#ifdef USE_ENVMAP\n"+
+"    float m = 2.0 * sqrt(dot(vReflection, vReflection) + 2.0*vReflection.z + 1.0);\n"+
+"    vec4 textureColor = texture2D(uSampler, vReflection.xy / m + vec2(0.5, 0.5));\n"+
+"#else\n"+
+"    vec4 textureColor = texture2D(uSampler, vTexcoord);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXTURE_rgb\n"+
+"\n"+
+"#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n"+
+"    textureColor = vec4(textureColor.rgb, lighteffect.a);\n"+
+"#endif \n"+
+"\n"+
+"#ifdef TEXMODE_modulate\n"+
+"    textureColor = lighteffect*vec4(textureColor.rgb, 1.);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_blend\n"+
+"    textureColor = vec4((1. - textureColor.rgb) * lighteffect.rgb, lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_add\n"+
+"    textureColor = vec4(lighteffect.rgb + textureColor.rgb, lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#endif //TEXTURE_rgb\n"+
+"        \n"+
+"#ifdef TEXTURE_rgba\n"+
+"\n"+
+"#ifdef TEXMODE_replace\n"+
+"// already done\n"+
+"#endif \n"+
+"\n"+
+"#ifdef TEXMODE_modulate\n"+
+"    textureColor = lighteffect*textureColor;\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_decal\n"+
+"    textureColor = vec4((1. - textureColor.a)*lighteffect.rgb) +\n"+
+"                     textureColor.a*textureColor.rgb, \n"+
+"                     lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_blend\n"+
+"    textureColor = vec4((1. - textureColor.rgb) * lighteffect.rgb,\n"+
+"                    lighteffect.a*textureColor.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_add\n"+
+"    textureColor = vec4(lighteffect.rgb + textureColor.rgb,\n"+
+"                    lighteffect.a*textureColor.a);\n"+
+"#endif\n"+
+"    \n"+
+"#endif //TEXTURE_rgba\n"+
+"    \n"+
+"#ifdef TEXTURE_alpha\n"+
+"    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n"+
+"\n"+
+"#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n"+
+"    textureColor = vec4(lighteffect.rgb, luminance);\n"+
+"#endif \n"+
+"\n"+
+"#if defined(TEXMODE_modulate) || defined(TEXMODE_blend) || defined(TEXMODE_add)\n"+
+"    textureColor = vec4(lighteffect.rgb, lighteffect.a*luminance);\n"+
+"#endif\n"+
+" \n"+
+"#endif // TEXTURE_alpha\n"+
+"    \n"+
+"// The TEXTURE_luminance values are not from that reference    \n"+
+"#ifdef TEXTURE_luminance\n"+
+"    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n"+
+"\n"+
+"#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n"+
+"    textureColor = vec4(luminance, luminance, luminance, lighteffect.a);\n"+
+"#endif \n"+
+"\n"+
+"#ifdef TEXMODE_modulate\n"+
+"    textureColor = vec4(luminance*lighteffect.rgb, lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_blend\n"+
+"    textureColor = vec4((1. - luminance)*lighteffect.rgb,\n"+
+"                        lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_add\n"+
+"    textureColor = vec4(luminance + lighteffect.rgb, lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#endif // TEXTURE_luminance\n"+
+" \n"+
+"    \n"+
+"#ifdef TEXTURE_luminance_alpha\n"+
+"    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n"+
+"\n"+
+"#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n"+
+"    textureColor = vec4(luminance, luminance, luminance, textureColor.a);\n"+
+"#endif \n"+
+"\n"+
+"#ifdef TEXMODE_modulate\n"+
+"    textureColor = vec4(luminance*lighteffect.rgb, \n"+
+"                        textureColor.a*lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_blend\n"+
+"    textureColor = vec4((1. - luminance)*lighteffect.rgb,\n"+
+"                        textureColor.a*lighteffect.a);\n"+
+"#endif\n"+
+"\n"+
+"#ifdef TEXMODE_add\n"+
+"    textureColor = vec4(luminance + lighteffect.rgb, \n"+
+"                        textureColor.a*lighteffect.a);\n"+
+"\n"+
+"#endif\n"+
+"\n"+
+"#endif // TEXTURE_luminance_alpha\n"+
+"    \n"+
+"    fragColor = textureColor;\n"+
+"\n"+
+"#elif defined(IS_TEXT)\n"+
+"    if (textureColor.a < 0.1)\n"+
+"      discard;\n"+
+"    else\n"+
+"      fragColor = textureColor;\n"+
+"#else\n"+
+"    fragColor = lighteffect;\n"+
+"#endif // HAS_TEXTURE\n"+
+"    \n"+
+"#ifdef HAS_FOG\n"+
+"    // uFogParms elements: x = near, y = far, z = fogscale, w = (1-sin(FOV/2))/(1+sin(FOV/2))\n"+
+"    // In Exp and Exp2: use density = density/far\n"+
+"    // fogF will be the proportion of fog\n"+
+"    // Initialize it to the linear value\n"+
+"    float fogF;\n"+
+"    if (uFogMode > 0) {\n"+
+"      fogF = (uFogParms.y - vPosition.z/vPosition.w)/(uFogParms.y - uFogParms.x);\n"+
+"      if (uFogMode > 1)\n"+
+"        fogF = mix(uFogParms.w, 1.0, fogF);\n"+
+"      fogF = fogF*uFogParms.z;\n"+
+"      if (uFogMode == 2)\n"+
+"        fogF = 1.0 - exp(-fogF);\n"+
+"      // Docs are wrong: use (density*c)^2, not density*c^2\n"+
+"      // https://gitlab.freedesktop.org/mesa/mesa/-/blob/master/src/mesa/swrast/s_fog.c#L58\n"+
+"      else if (uFogMode == 3)\n"+
+"        fogF = 1.0 - exp(-fogF*fogF);\n"+
+"      fogF = clamp(fogF, 0.0, 1.0);\n"+
+"      gl_FragColor = vec4(mix(fragColor.rgb, uFogColor, fogF), fragColor.a);\n"+
+"    } else gl_FragColor = fragColor;\n"+
+"#else\n"+
+"    gl_FragColor = fragColor;\n"+
+"#endif // HAS_FOG\n"+
+"    \n"+
+"}\n" ;};
 </script>
 <script>    /**
      * Methods related to textures
@@ -3254,46 +3716,39 @@ rglwidgetClass = function() {
      */
     rglwidgetClass.prototype.initSphere = function(sections, segments) {
       var v = [], phi = [], theta = [], it = [], centers = [],
-           i, j, k, ind, mod1, pole, result = {};
+           i, j, k, ind, result = {};
        
-      for (i = 0; i < sections - 1; i++) {
-        phi.push((i + 1)/sections - 0.5);
+      for (i = 0; i <= sections; i++) {
+        phi.push(i/sections - 0.5);
       }
 
-      for (j = 0; j < segments; j++) {
+      for (j = 0; j <= segments; j++) {
         theta.push(2*j/segments);
-        for (i = 0; i < sections - 1; i++) {
+        for (i = 0; i <= sections; i++) {
           /* These are [x,y,z,s,t]: */
           v.push([Math.sin(Math.PI*theta[j]) * Math.cos(Math.PI*phi[i]),
                   Math.sin(Math.PI*phi[i]),
                   Math.cos(Math.PI*theta[j]) * Math.cos(Math.PI*phi[i]),                               
                   theta[j]/2,
                   phi[i] + 0.5]);
+           // console.log("xyzst="+v[v.length-1]);
         }
       }
-      pole = v.length;
-      v.push([0, -1, 0, 0, 0]); 
-      v.push([0,  1, 0, 0, 1]);
       result.values = new Float32Array(rglwidgetClass.flatten(v));
       result.vertexCount = v.length;
       
-      mod1 = segments*(sections - 1);
       for (j = 0; j < segments; j++) {
-        for (i = 0; i < sections - 2; i++) {
-          ind = i + (sections - 1)*j;
-          it.push([ind % mod1, 
-                   (ind + sections - 1) % mod1,
-                   (ind + sections) % mod1]);
-          it.push([ind % mod1, 
-                   (ind + sections) % mod1,
-                   (ind + 1) % mod1]);
+        for (i = 0; i < sections; i++) {
+          ind = i + (sections + 1)*j;
+          if (i > 0)                       // Not south pole
+            it.push([ind, 
+                     ind + sections + 1,
+                     ind + 1]);
+          if (i < sections - 1)             // Not north pole
+            it.push([ind + sections + 1, 
+                     ind + sections + 2,
+                     ind + 1]);
         }
-        it.push([pole, 
-                 ((j + 1)*(sections - 1)) % mod1,
-                 ((j + 1)*(sections - 1) - sections + 1) % mod1]);
-        it.push([pole + 1, 
-                 ((j + 1)*(sections - 1) - 1) % mod1,
-                 ((j + 1)*(sections - 1) + sections - 2) % mod1]);
       }
       result.it = new Uint16Array(rglwidgetClass.flatten(it));
       
@@ -3839,7 +4294,8 @@ rglwidgetClass = function() {
 
     var stride = 3, nc, cofs, nofs, radofs, oofs, tofs, vnew, fnew,
         nextofs = -1, pointofs = -1, alias, colors, key, selection,
-        filter, adj, offset, attr, last, options;
+        filter, adj, offset, attr, last, options, 
+        len, current;
 
     obj.alias = undefined;
     
@@ -4056,11 +4512,30 @@ rglwidgetClass = function() {
       obj.objects = rglwidgetClass.flatten([].concat(obj.ids));
       fl.is_lit = false;
       obj.adj = rglwidgetClass.flatten(obj.adj);
+      
       if (typeof obj.pos !== "undefined") {
         obj.pos = rglwidgetClass.flatten(obj.pos);
         obj.offset = obj.adj[0];
       } else
         obj.offset = 0;
+        
+      var shapenum = rglwidgetClass.flatten(obj.shapenum);
+      obj.shapelens = [];
+      obj.shapefirst = [];
+      obj.shapefirst.push(0);
+      len = 0;
+      current = 0;
+      for (i = 0; i < shapenum.length; i++) {
+        if (shapenum[i] === shapenum[current]) {
+          len++;
+        } else {
+          obj.shapelens.push(len);
+          len = 1;
+          current = i;
+          obj.shapefirst.push(i);
+        }
+      }
+      obj.shapelens.push(len);
         
       for (i=0; i < obj.objects.length; i++)
         this.initObjId(obj.objects[i]);
@@ -4103,7 +4578,7 @@ rglwidgetClass = function() {
       	f = fnew = obj.f[pass];
         pmode = obj.pmode[pass];
       	if (pmode === "culled")
-      	  f = [];
+      	  fnew = [];
         else if (pmode === "points") {
           // stay with default
         } else if ((type === "quads" || type === "text" ||
@@ -4416,9 +4891,19 @@ rglwidgetClass = function() {
      */
     rglwidgetClass.prototype.restartCanvas = function() {
       var newcanvas = document.createElement("canvas"),
-          self = this;
+          self = this, 
+          labelid = this.el.getAttribute("aria-labelledby");
       newcanvas.width = this.el.width;
       newcanvas.height = this.el.height;
+      newcanvas.setAttribute("aria-labelledby", 
+        labelid);
+        
+      if (typeof this.scene.altText !== "undefined") {
+        // We're in Shiny, so alter the label
+        var label = document.getElementById(labelid);
+        if (label)
+          label.innerHTML = this.scene.altText;
+      }
       newcanvas.addEventListener("webglcontextrestored",
         this.onContextRestored, false);
       newcanvas.addEventListener("webglcontextlost",
@@ -5334,7 +5819,7 @@ rglwidgetClass = function() {
      * @param { array } context - Which context are we in?
      */      
     rglwidgetClass.prototype.drawPlanes = function(obj, subscene, context) {
-      if (obj.bbox !== subscene.par3d.bbox || !obj.initialized) {
+      if (this.opaquePass && (obj.bbox !== subscene.par3d.bbox || !obj.initialized)) {
           this.planeUpdateTriangles(obj, subscene.par3d.bbox);
       }
       return this.drawSimple(obj, subscene, context);
@@ -5599,9 +6084,12 @@ rglwidgetClass = function() {
         this.setnormMatrix2();
         this.setprmvMatrix();
       
-        for (i=0; i < obj.objects.length; i++)
+        j = iOrig % obj.shapefirst.length;
+        var first = obj.shapefirst[j];
+        
+        for (i=0; i < obj.shapelens[j]; i++)
           if (this.opaquePass)
-            result = result.concat(this.drawObjId(obj.objects[i], subscene.id, context.concat(j)));
+            result = result.concat(this.drawObjId(obj.objects[first + i], subscene.id, context.concat(j)));
           else
             this.drawObjId(obj.objects[i], subscene.id, context);
       }
@@ -7652,344 +8140,6 @@ rglwidgetClass.prototype.R_pretty = function(
       M.multRight(matrix);      
     };
 </script>
-<!--html_preserve--><script type="text/plain" id="rgl-vertex-shader">
-#line 2 1
-// File 1 is the vertex shader
-#ifdef GL_ES
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
-#endif
-
-attribute vec3 aPos;
-attribute vec4 aCol;
-uniform mat4 mvMatrix;
-uniform mat4 prMatrix;
-varying vec4 vCol;
-varying vec4 vPosition;
-
-#ifdef NEEDS_VNORMAL
-attribute vec3 aNorm;
-uniform mat4 normMatrix;
-varying vec4 vNormal;
-#endif
-
-#if defined(HAS_TEXTURE) || defined (IS_TEXT)
-attribute vec2 aTexcoord;
-varying vec2 vTexcoord;
-#endif
-
-#ifdef FIXED_SIZE
-uniform vec3 textScale;
-#endif
-
-#ifdef FIXED_QUADS
-attribute vec3 aOfs;
-#endif
-
-#ifdef IS_TWOSIDED
-#ifdef HAS_NORMALS
-varying float normz;
-uniform mat4 invPrMatrix;
-#else
-attribute vec3 aPos1;
-attribute vec3 aPos2;
-varying float normz;
-#endif
-#endif // IS_TWOSIDED
-
-#ifdef FAT_LINES
-attribute vec3 aNext;
-attribute vec2 aPoint;
-varying vec2 vPoint;
-varying float vLength;
-uniform float uAspect;
-uniform float uLwd;
-#endif
-
-
-void main(void) {
-  
-#ifndef IS_BRUSH
-#if defined(NCLIPPLANES) || !defined(FIXED_QUADS) || defined(HAS_FOG)
-  vPosition = mvMatrix * vec4(aPos, 1.);
-#endif
-  
-#ifndef FIXED_QUADS
-  gl_Position = prMatrix * vPosition;
-#endif
-#endif // !IS_BRUSH
-  
-#ifdef IS_POINTS
-  gl_PointSize = POINTSIZE;
-#endif
-  
-  vCol = aCol;
-  
-#ifdef NEEDS_VNORMAL
-  vNormal = normMatrix * vec4(-aNorm, dot(aNorm, aPos));
-#endif
-  
-#ifdef IS_TWOSIDED
-#ifdef HAS_NORMALS
-  /* normz should be calculated *after* projection */
-  normz = (invPrMatrix*vNormal).z;
-#else
-  vec4 pos1 = prMatrix*(mvMatrix*vec4(aPos1, 1.));
-  pos1 = pos1/pos1.w - gl_Position/gl_Position.w;
-  vec4 pos2 = prMatrix*(mvMatrix*vec4(aPos2, 1.));
-  pos2 = pos2/pos2.w - gl_Position/gl_Position.w;
-  normz = pos1.x*pos2.y - pos1.y*pos2.x;
-#endif
-#endif // IS_TWOSIDED
-  
-#ifdef NEEDS_VNORMAL
-  vNormal = vec4(normalize(vNormal.xyz/vNormal.w), 1);
-#endif
-  
-#if defined(HAS_TEXTURE) || defined(IS_TEXT)
-  vTexcoord = aTexcoord;
-#endif
-  
-#if defined(FIXED_SIZE) && !defined(ROTATING)
-  vec4 pos = prMatrix * mvMatrix * vec4(aPos, 1.);
-  pos = pos/pos.w;
-  gl_Position = pos + vec4(aOfs*textScale, 0.);
-#endif
-  
-#if defined(IS_SPRITES) && !defined(FIXED_SIZE)
-  vec4 pos = mvMatrix * vec4(aPos, 1.);
-  pos = pos/pos.w + vec4(aOfs,  0.);
-  gl_Position = prMatrix*pos;
-#endif
-  
-#ifdef FAT_LINES
-  /* This code was inspired by Matt Deslauriers' code in 
-   https://mattdesl.svbtle.com/drawing-lines-is-hard */
-  vec2 aspectVec = vec2(uAspect, 1.0);
-  mat4 projViewModel = prMatrix * mvMatrix;
-  vec4 currentProjected = projViewModel * vec4(aPos, 1.0);
-  currentProjected = currentProjected/currentProjected.w;
-  vec4 nextProjected = projViewModel * vec4(aNext, 1.0);
-  vec2 currentScreen = currentProjected.xy * aspectVec;
-  vec2 nextScreen = (nextProjected.xy / nextProjected.w) * aspectVec;
-  float len = uLwd;
-  vec2 dir = vec2(1.0, 0.0);
-  vPoint = aPoint;
-  vLength = length(nextScreen - currentScreen)/2.0;
-  vLength = vLength/(vLength + len);
-  if (vLength > 0.0) {
-    dir = normalize(nextScreen - currentScreen);
-  }
-  vec2 normal = vec2(-dir.y, dir.x);
-  dir.x /= uAspect;
-  normal.x /= uAspect;
-  vec4 offset = vec4(len*(normal*aPoint.x*aPoint.y - dir), 0.0, 0.0);
-  gl_Position = currentProjected + offset;
-#endif
-  
-#ifdef IS_BRUSH
-  gl_Position = vec4(aPos, 1.);
-#endif
-}
-</script>
-<script type="text/plain" id="rgl-fragment-shader">
-#line 2 2
-// File 2 is the fragment shader
-#ifdef GL_ES
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
-#endif
-varying vec4 vCol; // carries alpha
-varying vec4 vPosition;
-#if defined(HAS_TEXTURE) || defined (IS_TEXT)
-varying vec2 vTexcoord;
-uniform sampler2D uSampler;
-#endif
-
-#ifdef HAS_FOG
-uniform int uFogMode;
-uniform vec3 uFogColor;
-uniform vec4 uFogParms;
-#endif
-
-#if defined(IS_LIT) && !defined(FIXED_QUADS)
-varying vec4 vNormal;
-#endif
-
-#if NCLIPPLANES > 0
-uniform vec4 vClipplane[NCLIPPLANES];
-#endif
-
-#if NLIGHTS > 0
-uniform mat4 mvMatrix;
-#endif
-
-#ifdef IS_LIT
-uniform vec3 emission;
-uniform float shininess;
-#if NLIGHTS > 0
-uniform vec3 ambient[NLIGHTS];
-uniform vec3 specular[NLIGHTS]; // light*material
-uniform vec3 diffuse[NLIGHTS];
-uniform vec3 lightDir[NLIGHTS];
-uniform bool viewpoint[NLIGHTS];
-uniform bool finite[NLIGHTS];
-#endif
-#endif // IS_LIT
-
-#ifdef IS_TWOSIDED
-uniform bool front;
-varying float normz;
-#endif
-
-#ifdef FAT_LINES
-varying vec2 vPoint;
-varying float vLength;
-#endif
-
-void main(void) {
-  vec4 fragColor;
-#ifdef FAT_LINES
-  vec2 point = vPoint;
-  bool neg = point.y < 0.0;
-  point.y = neg ? (point.y + vLength)/(1.0 - vLength) :
-                 -(point.y - vLength)/(1.0 - vLength);
-#if defined(IS_TRANSPARENT) && defined(IS_LINESTRIP)
-  if (neg && length(point) <= 1.0) discard;
-#endif
-  point.y = min(point.y, 0.0);
-  if (length(point) > 1.0) discard;
-#endif // FAT_LINES
-  
-#ifdef ROUND_POINTS
-  vec2 coord = gl_PointCoord - vec2(0.5);
-  if (length(coord) > 0.5) discard;
-#endif
-  
-#if NCLIPPLANES > 0
-  for (int i = 0; i < NCLIPPLANES; i++)
-    if (dot(vPosition, vClipplane[i]) < 0.0) discard;
-#endif
-    
-#ifdef FIXED_QUADS
-    vec3 n = vec3(0., 0., 1.);
-#elif defined(IS_LIT)
-    vec3 n = normalize(vNormal.xyz);
-#endif
-    
-#ifdef IS_TWOSIDED
-    if ((normz <= 0.) != front) discard;
-#endif
-    
-#ifdef IS_LIT
-    vec3 eye = normalize(-vPosition.xyz/vPosition.w);
-    vec3 lightdir;
-    vec4 colDiff;
-    vec3 halfVec;
-    vec4 lighteffect = vec4(emission, 0.);
-    vec3 col;
-    float nDotL;
-#ifdef FIXED_QUADS
-    n = -faceforward(n, n, eye);
-#endif
-    
-#if NLIGHTS > 0
-    for (int i=0;i<NLIGHTS;i++) {
-      colDiff = vec4(vCol.rgb * diffuse[i], vCol.a);
-      lightdir = lightDir[i];
-      if (!viewpoint[i])
-        lightdir = (mvMatrix * vec4(lightdir, 1.)).xyz;
-      if (!finite[i]) {
-        halfVec = normalize(lightdir + eye);
-      } else {
-        lightdir = normalize(lightdir - vPosition.xyz/vPosition.w);
-        halfVec = normalize(lightdir + eye);
-      }
-      col = ambient[i];
-      nDotL = dot(n, lightdir);
-      col = col + max(nDotL, 0.) * colDiff.rgb;
-      col = col + pow(max(dot(halfVec, n), 0.), shininess) * specular[i];
-      lighteffect = lighteffect + vec4(col, colDiff.a);
-    }
-#endif
-    
-#else // not IS_LIT
-    vec4 colDiff = vCol;
-    vec4 lighteffect = colDiff;
-#endif
-    
-#ifdef IS_TEXT
-    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);
-#endif
-    
-#ifdef HAS_TEXTURE
-#ifdef TEXTURE_rgb
-    vec4 textureColor = lighteffect*vec4(texture2D(uSampler, vTexcoord).rgb, 1.);
-#endif
-    
-#ifdef TEXTURE_rgba
-    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);
-#endif
-    
-#ifdef TEXTURE_alpha
-    vec4 textureColor = texture2D(uSampler, vTexcoord);
-    float luminance = dot(vec3(1.,1.,1.), textureColor.rgb)/3.;
-    textureColor =  vec4(lighteffect.rgb, lighteffect.a*luminance);
-#endif
-    
-#ifdef TEXTURE_luminance
-    vec4 textureColor = vec4(lighteffect.rgb*dot(texture2D(uSampler, vTexcoord).rgb, vec3(1.,1.,1.))/3., lighteffect.a);
-#endif
-    
-#ifdef TEXTURE_luminance_alpha
-    vec4 textureColor = texture2D(uSampler, vTexcoord);
-    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;
-    textureColor = vec4(lighteffect.rgb*luminance, lighteffect.a*textureColor.a);
-#endif
-    
-    fragColor = textureColor;
-
-#elif defined(IS_TEXT)
-    if (textureColor.a < 0.1)
-      discard;
-    else
-      fragColor = textureColor;
-#else
-    fragColor = lighteffect;
-#endif // HAS_TEXTURE
-    
-#ifdef HAS_FOG
-    // uFogParms elements: x = near, y = far, z = fogscale, w = (1-sin(FOV/2))/(1+sin(FOV/2))
-    // In Exp and Exp2: use density = density/far
-    // fogF will be the proportion of fog
-    // Initialize it to the linear value
-    float fogF;
-    if (uFogMode > 0) {
-      fogF = (uFogParms.y - vPosition.z/vPosition.w)/(uFogParms.y - uFogParms.x);
-      if (uFogMode > 1)
-        fogF = mix(uFogParms.w, 1.0, fogF);
-      fogF = fogF*uFogParms.z;
-      if (uFogMode == 2)
-        fogF = 1.0 - exp(-fogF);
-      // Docs are wrong: use (density*c)^2, not density*c^2
-      // https://gitlab.freedesktop.org/mesa/mesa/-/blob/master/src/mesa/swrast/s_fog.c#L58
-      else if (uFogMode == 3)
-        fogF = 1.0 - exp(-fogF*fogF);
-      fogF = clamp(fogF, 0.0, 1.0);
-      gl_FragColor = vec4(mix(fragColor.rgb, uFogColor, fogF), fragColor.a);
-    } else gl_FragColor = fragColor;
-#else
-    gl_FragColor = fragColor;
-#endif // HAS_FOG
-    
-}
-</script><!--/html_preserve-->
 <script>/* globals CanvasMatrix4: true */
 /* globals WebGLFloatArray */
 /* jshint eqeqeq: false */
@@ -8742,7 +8892,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -9031,7 +9181,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Solving Linear Equations</h1>
 <h4 class="author">Michael Friendly and John Fox</h4>
-<h4 class="date">2022-12-08</h4>
+<h4 class="date">2024-07-25</h4>
 
 
 
@@ -9061,30 +9211,30 @@ n\)</span></li>
 <p>We use <code>c( R(A), R(cbind(A,b)) )</code> to show the ranks, and
 <code>all.equal( R(A), R(cbind(A,b)) )</code> to test for
 consistency.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(matlib)   <span class="co"># use the package</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(matlib)   <span class="co"># use the package</span></span></code></pre></div>
 <div id="equations-in-two-unknowns" class="section level2">
 <h2>Equations in two unknowns</h2>
 <p>Each equation in two unknowns corresponds to a line in 2D space. The
 equations have a unique solution if all lines intersect in a point.</p>
 <div id="two-consistent-equations" class="section level3">
 <h3>Two consistent equations</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>), <span class="dv">2</span>, <span class="dv">2</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>), <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
 <pre><code>## 1*x1 - 1*x2  =  2 
 ## 2*x1 + 2*x2  =  1</code></pre>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
 <pre><code>## [1] 2 2</code></pre>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 <p>Plot the equations:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b)</span></code></pre></div>
 <pre><code>##   x[1] - 1*x[2]  =  2 
 ## 2*x[1] + 2*x[2]  =  1</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
 <p><code>Solve()</code> is a convenience function that shows the
 solution in a more comprehensible form:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## x1    =   5/4 
 ##   x2  =  -3/4</code></pre>
 </div>
@@ -9096,22 +9246,22 @@ means that whatever linear relations exist among the rows of <span class="math i
 among the elements of <span class="math inline">\(\mathbf{b}\)</span>.</p>
 <p>Geometrically, this means that all three lines intersect in a
 point.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">2</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">2</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
 <pre><code>## 1*x1 - 1*x2  =  2 
 ## 2*x1 + 2*x2  =  1 
 ## 3*x1 + 1*x2  =  3</code></pre>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
 <pre><code>## [1] 2 2</code></pre>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions=</span><span class="cn">TRUE</span>)       <span class="co"># show solution </span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions=</span><span class="cn">TRUE</span>)       <span class="co"># show solution </span></span></code></pre></div>
 <pre><code>## x1    =   5/4 
 ##   x2  =  -3/4 
 ##    0  =     0</code></pre>
 <p>Plot the equations:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b)</span></code></pre></div>
 <pre><code>##   x[1] - 1*x[2]  =  2 
 ## 2*x[1] + 2*x[2]  =  1 
 ## 3*x[1]   + x[2]  =  3</code></pre>
@@ -9120,43 +9270,43 @@ point.</p>
 <div id="three-inconsistent-equations" class="section level3">
 <h3>Three inconsistent equations</h3>
 <p>Three equations in two unknowns are <em>inconsistent</em> when <span class="math inline">\(r(\mathbf{A}) &lt; r(\mathbf{A | b})\)</span>.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">2</span>)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">6</span>)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">2</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">6</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
 <pre><code>## 1*x1 - 1*x2  =  2 
 ## 2*x1 + 2*x2  =  1 
 ## 3*x1 + 1*x2  =  6</code></pre>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
 <pre><code>## [1] 2 3</code></pre>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
 <pre><code>## [1] &quot;Mean relative difference: 0.5&quot;</code></pre>
 <p>You can see this in the result of reducing <span class="math inline">\(\mathbf{A} | \mathbf{b}\)</span> to echelon form,
 where the last row indicates the inconsistency.</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">echelon</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">echelon</span>(A, b)</span></code></pre></div>
 <pre><code>##      [,1] [,2]  [,3]
 ## [1,]    1    0  2.75
 ## [2,]    0    1 -2.25
 ## [3,]    0    0 -3.00</code></pre>
 <p><code>Solve()</code> shows this more explicitly:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">Solve</span>(A, b, <span class="at">fractions=</span><span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## x1    =  11/4 
 ##   x2  =  -9/4 
 ##    0  =    -3</code></pre>
 <p>An approximate solution is sometimes available using a generalized
 inverse.</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">ginv</span>(A) <span class="sc">%*%</span> b</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>x</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">ginv</span>(A) <span class="sc">%*%</span> b</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>x</span></code></pre></div>
 <pre><code>##      [,1]
 ## [1,]    2
 ## [2,]   -1</code></pre>
 <p>Plot the equations. You can see that each pair of equations has a
 solution, but all three do not have a common, consistent solution.</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">4</span>,<span class="dv">0</span>,<span class="dv">0</span>)<span class="sc">+</span>.<span class="dv">1</span>)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">4</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">4</span>,<span class="dv">0</span>,<span class="dv">0</span>)<span class="sc">+</span>.<span class="dv">1</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a><span class="fu">plotEqn</span>(A,b, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">4</span>))</span></code></pre></div>
 <pre><code>##   x[1] - 1*x[2]  =  2 
 ## 2*x[1] + 2*x[2]  =  1 
 ## 3*x[1]   + x[2]  =  6</code></pre>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(x[<span class="dv">1</span>], x[<span class="dv">2</span>], <span class="at">pch=</span><span class="dv">15</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">points</span>(x[<span class="dv">1</span>], x[<span class="dv">2</span>], <span class="at">pch=</span><span class="dv">15</span>)</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 </div>
@@ -9167,30 +9317,30 @@ The equations have a unique solution if all planes intersect in a
 point.</p>
 <div id="three-consistent-equations-1" class="section level3">
 <h3>Three consistent equations</h3>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>,</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>             <span class="sc">-</span><span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>,</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>             <span class="sc">-</span><span class="dv">2</span>,  <span class="dv">1</span>, <span class="dv">2</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="at">byrow=</span><span class="cn">TRUE</span>)</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&#39;x&#39;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="sc">-</span><span class="dv">11</span>, <span class="sc">-</span><span class="dv">3</span>)</span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>             <span class="sc">-</span><span class="dv">3</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>,</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>             <span class="sc">-</span><span class="dv">2</span>,  <span class="dv">1</span>, <span class="dv">2</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="at">byrow=</span><span class="cn">TRUE</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a><span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&#39;x&#39;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="sc">-</span><span class="dv">11</span>, <span class="sc">-</span><span class="dv">3</span>)</span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
 <pre><code>##  2*x1 + 1*x2 - 1*x3  =    8 
 ## -3*x1 - 1*x2 + 2*x3  =  -11 
 ## -2*x1 + 1*x2 + 2*x3  =   -3</code></pre>
 <p>Are the equations consistent?</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
 <pre><code>## [1] 3 3</code></pre>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 <p>Solve for <span class="math inline">\(\mathbf{x}\)</span>.</p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">solve</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a><span class="fu">solve</span>(A, b)</span></code></pre></div>
 <pre><code>## x1 x2 x3 
 ##  2  3 -1</code></pre>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">solve</span>(A) <span class="sc">%*%</span> b</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="fu">solve</span>(A) <span class="sc">%*%</span> b</span></code></pre></div>
 <pre><code>##    [,1]
 ## x1    2
 ## x2    3
 ## x3   -1</code></pre>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">inv</span>(A) <span class="sc">%*%</span> b</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">inv</span>(A) <span class="sc">%*%</span> b</span></code></pre></div>
 <pre><code>##      [,1]
 ## [1,]    2
 ## [2,]    3
@@ -9198,12 +9348,12 @@ point.</p>
 <p>Another way to see the solution is to reduce <span class="math inline">\(\mathbf{A | b}\)</span> to echelon form. The
 result is <span class="math inline">\(\mathbf{I | A^{-1}b}\)</span>,
 with the solution in the last column.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">echelon</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a><span class="fu">echelon</span>(A, b)</span></code></pre></div>
 <pre><code>##      x1 x2 x3   
 ## [1,]  1  0  0  2
 ## [2,]  0  1  0  3
 ## [3,]  0  0  1 -1</code></pre>
-<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">echelon</span>(A, b, <span class="at">verbose=</span><span class="cn">TRUE</span>, <span class="at">fractions=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a><span class="fu">echelon</span>(A, b, <span class="at">verbose=</span><span class="cn">TRUE</span>, <span class="at">fractions=</span><span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ## Initial matrix:
 ##      x1  x2  x3     
@@ -9285,25 +9435,25 @@ with the solution in the last column.</p>
 <p>Plot them. <code>plotEqn3d</code> uses <code>rgl</code> for 3D
 graphics. If you rotate the figure, you’ll see an orientation where all
 three planes intersect at the solution point, <span class="math inline">\(\mathbf{x} = (2, 3, -1)\)</span></p>
-<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotEqn3d</span>(A,b, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">4</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">4</span>))</span></code></pre></div>
-<div id="rgl82298" style="width:288px;height:288px;" class="rglWebGL html-widget"></div>
-<script type="application/json" data-for="rgl82298">{"x":{"material":{"color":"#000000","alpha":1,"lit":true,"ambient":"#000000","specular":"#FFFFFF","emission":"#000000","shininess":50,"smooth":true,"front":"filled","back":"filled","size":3,"lwd":1,"fog":true,"point_antialias":false,"line_antialias":false,"texture":null,"textype":"rgb","texmipmap":false,"texminfilter":"linear","texmagfilter":"linear","texenvmap":false,"depth_mask":true,"depth_test":"less","isTransparent":false,"polygon_offset":[0,0],"margin":"","floating":false,"tag":"","blend":["src_alpha","one_minus_src_alpha"]},"rootSubscene":7,"objects":{"31":{"id":31,"type":"clipplanes","offsets":[[-0],[4],[-0],[4],[3],[3]],"normals":"0","flags":512},"32":{"id":32,"type":"lines","material":{"lit":false},"vertices":"1","colors":"2","centers":"3","ignoreExtent":false,"flags":32832},"33":{"id":33,"type":"lines","material":{"lit":false},"vertices":"4","colors":"5","centers":"6","ignoreExtent":false,"flags":32832},"35":{"id":35,"type":"text","material":{"lit":false,"margin":0,"floating":true,"edge":[0,1,1]},"vertices":"7","colors":"8","texts":[["x1"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"9","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"36":{"id":36,"type":"text","material":{"lit":false,"margin":1,"floating":true,"edge":[1,1,1]},"vertices":"10","colors":"11","texts":[["x2"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"12","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"37":{"id":37,"type":"text","material":{"lit":false,"margin":2,"floating":true,"edge":[1,1,1]},"vertices":"13","colors":"14","texts":[["x3"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"15","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"38":{"id":38,"type":"planes","material":{"alpha":[0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611,0.898039221763611],"lit":false,"isTransparent":true},"vertices":"16","colors":"18","offsets":[[-8],[11],[3]],"centers":"19","normals":"17","ignoreExtent":true,"flags":32802},"39":{"id":39,"type":"spheres","material":{},"vertices":"20","colors":"21","radii":[[0.200000002980232]],"centers":"22","ignoreExtent":false,"fastTransparency":true,"flags":32771},"11":{"id":11,"type":"light","vertices":[[0,0,1]],"colors":[[1,1,1,1],[1,1,1,1],[1,1,1,1]],"viewpoint":true,"finite":false},"12":{"id":12,"type":"background","material":{"lit":false,"back":"lines"},"colors":"23","centers":"24","sphere":false,"fogtype":"none","fogscale":1,"flags":32768},"34":{"id":34,"type":"bboxdeco","material":{"front":"lines","back":"lines"},"vertices":"25","colors":"26","axes":{"mode":["pretty","pretty","pretty"],"step":[1,1,1],"nticks":[5,5,5],"marklen":[15,15,15],"expand":[1.02999997138977,1.02999997138977,1.02999997138977]},"draw_front":true,"flags":32769},"30":{"id":30,"type":"subscene","par3d":{"antialias":8,"FOV":30,"ignoreExtent":false,"listeners":7,"mouseMode":{"none":"none","left":"trackball","right":"zoom","middle":"fov","wheel":"pull"},"observer":[0,0,20.1785793304443],"modelMatrix":[[1.19023811817169,0,0,-2.38047623634338],[0,0.407085418701172,0.745638608932495,-0.814170837402344],[0,-1.11845791339874,0.2713902592659,-17.9416637420654],[0,0,0,1]],"projMatrix":[[3.73205065727234,0,0,0],[0,3.73205065727234,0,0],[0,0,-3.86370301246643,-72.7414398193359],[0,0,-1,0]],"skipRedraw":false,"userMatrix":[[1,0,0,0],[0,0.342020143325668,0.939692620785909,0],[0,-0.939692620785909,0.342020143325668,0],[0,0,0,1]],"userProjection":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"scale":[1.19023811817169,1.19023811817169,0.793492019176483],"viewport":{"x":0,"y":0,"width":1,"height":1},"zoom":1,"bbox":[1,3,1,3,1,3],"windowRect":[233,255,489,511],"family":"sans","font":1,"cex":1,"useFreeType":false,"fontname":"TT Arial","maxClipPlanes":8,"glVersion":4.2,"activeSubscene":0},"embeddings":{"viewport":"inherit","projection":"inherit","model":"inherit","mouse":"inherit"},"objects":[31,32,11],"parent":7,"subscenes":[],"flags":33600},"7":{"id":7,"type":"subscene","par3d":{"antialias":8,"FOV":30,"ignoreExtent":false,"listeners":7,"mouseMode":{"none":"none","left":"trackball","right":"zoom","middle":"fov","wheel":"pull"},"observer":[0,0,20.1785793304443],"modelMatrix":[[1.19023811817169,0,0,-2.38047623634338],[0,0.407085418701172,0.745638608932495,-0.814170837402344],[0,-1.11845791339874,0.2713902592659,-17.9416637420654],[0,0,0,1]],"projMatrix":[[3.73205065727234,0,0,0],[0,3.73205065727234,0,0],[0,0,-3.86370301246643,-72.7414398193359],[0,0,-1,0]],"skipRedraw":false,"userMatrix":[[1,0,0,0],[0,0.342020143325668,0.939692620785909,0],[0,-0.939692620785909,0.342020143325668,0],[0,0,0,1]],"userProjection":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"scale":[1.19023811817169,1.19023811817169,0.793492019176483],"viewport":{"x":0,"y":0,"width":1,"height":1},"zoom":1,"bbox":[0,4,0,4,-3,3],"windowRect":[233,255,489,511],"family":"sans","font":1,"cex":1,"useFreeType":false,"fontname":"TT Arial","maxClipPlanes":8,"glVersion":4.2,"activeSubscene":0},"embeddings":{"viewport":"replace","projection":"replace","model":"replace","mouse":"replace"},"objects":[12,34,33,35,36,37,38,39,11,30],"subscenes":30,"flags":34675}},"crosstalk":{"key":[],"group":[],"id":[],"options":[]},"width":288,"height":288,"buffer":{"accessors":[{"bufferView":0,"componentType":5120,"count":6,"type":"VEC3"},{"bufferView":1,"componentType":5121,"count":4,"type":"VEC3"},{"bufferView":2,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":3,"componentType":5121,"count":2,"type":"VEC3"},{"bufferView":4,"componentType":5120,"count":4,"type":"VEC3"},{"bufferView":5,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":6,"componentType":5120,"count":2,"type":"VEC3"},{"bufferView":7,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":8,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":9,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":10,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":11,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":12,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":13,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":14,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":15,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":16,"componentType":5126,"count":3,"type":"VEC3"},{"bufferView":17,"componentType":5120,"count":3,"type":"VEC3"},{"bufferView":18,"componentType":5121,"count":36,"type":"VEC4","normalized":true},{"bufferView":19,"componentType":5126,"count":12,"type":"VEC3"},{"bufferView":20,"componentType":5120,"count":1,"type":"VEC3"},{"bufferView":21,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":22,"componentType":5120,"count":1,"type":"VEC3"},{"bufferView":23,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":24,"componentType":5121,"count":1,"type":"VEC3"},{"bufferView":25,"componentType":5126,"count":17,"type":"VEC3"},{"bufferView":26,"componentType":5121,"count":1,"type":"VEC4"}],"bufferViews":[{"buffer":0,"byteLength":18,"byteOffset":0},{"buffer":0,"byteLength":12,"byteOffset":18},{"buffer":0,"byteLength":4,"byteOffset":30},{"buffer":0,"byteLength":6,"byteOffset":34},{"buffer":0,"byteLength":12,"byteOffset":40},{"buffer":0,"byteLength":4,"byteOffset":52},{"buffer":0,"byteLength":6,"byteOffset":56},{"buffer":0,"byteLength":12,"byteOffset":64},{"buffer":0,"byteLength":4,"byteOffset":76},{"buffer":0,"byteLength":12,"byteOffset":80},{"buffer":0,"byteLength":12,"byteOffset":92},{"buffer":0,"byteLength":4,"byteOffset":104},{"buffer":0,"byteLength":12,"byteOffset":108},{"buffer":0,"byteLength":12,"byteOffset":120},{"buffer":0,"byteLength":4,"byteOffset":132},{"buffer":0,"byteLength":12,"byteOffset":136},{"buffer":0,"byteLength":36,"byteOffset":148},{"buffer":0,"byteLength":9,"byteOffset":184},{"buffer":0,"byteLength":144,"byteOffset":193},{"buffer":0,"byteLength":144,"byteOffset":340},{"buffer":0,"byteLength":3,"byteOffset":484},{"buffer":0,"byteLength":4,"byteOffset":487},{"buffer":0,"byteLength":3,"byteOffset":491},{"buffer":0,"byteLength":4,"byteOffset":494},{"buffer":0,"byteLength":3,"byteOffset":498},{"buffer":0,"byteLength":204,"byteOffset":504},{"buffer":0,"byteLength":4,"byteOffset":708}],"buffers":[{"byteLength":712,"bytes":"AQAA/wAAAAEAAP8AAAABAAD/AQEBAQEBAwMDAwMDAAAAAQEBAQMDAwAA/QAA/QQEAwQEAwAA\nAAEAAP0EBAMAAAAAwH8AAIBAAACAPwAAAAEAAMB/AACAQAAAgD8AAMB/AACAQAAAgD8AAAAB\nAADAfwAAgEAAAIA/AADAfwAAgEAAAIA/AAAAAQAAwH8AAIBAAACAPwAAgEAAAAAAAAAAAAAA\nYEAAAIBAAABAQAAAgEAAAEBAAABAQAIB//3/Av4BAt9Ta+XfU2vl31Nr5d9Ta+XfU2vl31Nr\n5d9Ta+XfU2vl31Nr5d9Ta+XfU2vl31Nr5WHQT+Vh0E/lYdBP5WHQT+Vh0E/lYdBP5WHQT+Vh\n0E/lYdBP5WHQT+Vh0E/lYdBP5SKX5uUil+blIpfm5SKX5uUil+blIpfm5SKX5uUil+blIpfm\n5SKX5uUil+blIpfm5QAAAFZVdUBWVRVAAAAAQKuqKkCrqipAAAAAAFZVFUCrqqo/AAAAwAAA\nwH8AAMB/AADAfxzHMUCrqipAAAAAAAAAAECrqqo/q6rqvwAAwH8AAMB/AADAfwAAwH8AAMB/\nAADAf6uqKkCrqqo/AAAAPwAAwD+rqipAq6qqv6uqKj5WVRVAAAAgwAAAwH8AAMB/AADAfwID\n/wAAAAECA/8BAQEBAAAAAAAAAAAAAAAAwH8AAMB/AACAPwAAwH8AAMB/AAAAQAAAwH8AAMB/\nAABAQAAAwH8AAMB/AACAQAAAwH8AAMB/AADAfwAAAAAAAMB/AADAfwAAgD8AAMB/AADAfwAA\nAEAAAMB/AADAfwAAQEAAAMB/AADAfwAAgEAAAMB/AADAfwAAwH8AAEDAAADAfwAAwH8AAADA\nAADAfwAAwH8AAIC/AADAfwAAwH8AAAAAAADAfwAAwH8AAIA/AADAfwAAwH8AAABAAADAfwAA\nwH8AAEBAAAAAAQ=="}]},"context":{"shiny":false,"rmarkdown":"rmarkdown::html_vignette"},"vertexShader":"#line 2 1\n// File 1 is the vertex shader\n#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n#endif\n\nattribute vec3 aPos;\nattribute vec4 aCol;\nuniform mat4 mvMatrix;\nuniform mat4 prMatrix;\nvarying vec4 vCol;\nvarying vec4 vPosition;\n\n#ifdef NEEDS_VNORMAL\nattribute vec3 aNorm;\nuniform mat4 normMatrix;\nvarying vec4 vNormal;\n#endif\n\n#if defined(HAS_TEXTURE) || defined (IS_TEXT)\nattribute vec2 aTexcoord;\nvarying vec2 vTexcoord;\n#endif\n\n#ifdef FIXED_SIZE\nuniform vec3 textScale;\n#endif\n\n#ifdef FIXED_QUADS\nattribute vec3 aOfs;\n#endif\n\n#ifdef IS_TWOSIDED\n#ifdef HAS_NORMALS\nvarying float normz;\nuniform mat4 invPrMatrix;\n#else\nattribute vec3 aPos1;\nattribute vec3 aPos2;\nvarying float normz;\n#endif\n#endif // IS_TWOSIDED\n\n#ifdef FAT_LINES\nattribute vec3 aNext;\nattribute vec2 aPoint;\nvarying vec2 vPoint;\nvarying float vLength;\nuniform float uAspect;\nuniform float uLwd;\n#endif\n\n\nvoid main(void) {\n  \n#ifndef IS_BRUSH\n#if defined(NCLIPPLANES) || !defined(FIXED_QUADS) || defined(HAS_FOG)\n  vPosition = mvMatrix * vec4(aPos, 1.);\n#endif\n  \n#ifndef FIXED_QUADS\n  gl_Position = prMatrix * vPosition;\n#endif\n#endif // !IS_BRUSH\n  \n#ifdef IS_POINTS\n  gl_PointSize = POINTSIZE;\n#endif\n  \n  vCol = aCol;\n  \n#ifdef NEEDS_VNORMAL\n  vNormal = normMatrix * vec4(-aNorm, dot(aNorm, aPos));\n#endif\n  \n#ifdef IS_TWOSIDED\n#ifdef HAS_NORMALS\n  /* normz should be calculated *after* projection */\n  normz = (invPrMatrix*vNormal).z;\n#else\n  vec4 pos1 = prMatrix*(mvMatrix*vec4(aPos1, 1.));\n  pos1 = pos1/pos1.w - gl_Position/gl_Position.w;\n  vec4 pos2 = prMatrix*(mvMatrix*vec4(aPos2, 1.));\n  pos2 = pos2/pos2.w - gl_Position/gl_Position.w;\n  normz = pos1.x*pos2.y - pos1.y*pos2.x;\n#endif\n#endif // IS_TWOSIDED\n  \n#ifdef NEEDS_VNORMAL\n  vNormal = vec4(normalize(vNormal.xyz/vNormal.w), 1);\n#endif\n  \n#if defined(HAS_TEXTURE) || defined(IS_TEXT)\n  vTexcoord = aTexcoord;\n#endif\n  \n#if defined(FIXED_SIZE) && !defined(ROTATING)\n  vec4 pos = prMatrix * mvMatrix * vec4(aPos, 1.);\n  pos = pos/pos.w;\n  gl_Position = pos + vec4(aOfs*textScale, 0.);\n#endif\n  \n#if defined(IS_SPRITES) && !defined(FIXED_SIZE)\n  vec4 pos = mvMatrix * vec4(aPos, 1.);\n  pos = pos/pos.w + vec4(aOfs,  0.);\n  gl_Position = prMatrix*pos;\n#endif\n  \n#ifdef FAT_LINES\n  /* This code was inspired by Matt Deslauriers' code in \n   https://mattdesl.svbtle.com/drawing-lines-is-hard */\n  vec2 aspectVec = vec2(uAspect, 1.0);\n  mat4 projViewModel = prMatrix * mvMatrix;\n  vec4 currentProjected = projViewModel * vec4(aPos, 1.0);\n  currentProjected = currentProjected/currentProjected.w;\n  vec4 nextProjected = projViewModel * vec4(aNext, 1.0);\n  vec2 currentScreen = currentProjected.xy * aspectVec;\n  vec2 nextScreen = (nextProjected.xy / nextProjected.w) * aspectVec;\n  float len = uLwd;\n  vec2 dir = vec2(1.0, 0.0);\n  vPoint = aPoint;\n  vLength = length(nextScreen - currentScreen)/2.0;\n  vLength = vLength/(vLength + len);\n  if (vLength > 0.0) {\n    dir = normalize(nextScreen - currentScreen);\n  }\n  vec2 normal = vec2(-dir.y, dir.x);\n  dir.x /= uAspect;\n  normal.x /= uAspect;\n  vec4 offset = vec4(len*(normal*aPoint.x*aPoint.y - dir), 0.0, 0.0);\n  gl_Position = currentProjected + offset;\n#endif\n  \n#ifdef IS_BRUSH\n  gl_Position = vec4(aPos, 1.);\n#endif\n}","fragmentShader":"#line 2 2\n// File 2 is the fragment shader\n#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n#endif\nvarying vec4 vCol; // carries alpha\nvarying vec4 vPosition;\n#if defined(HAS_TEXTURE) || defined (IS_TEXT)\nvarying vec2 vTexcoord;\nuniform sampler2D uSampler;\n#endif\n\n#ifdef HAS_FOG\nuniform int uFogMode;\nuniform vec3 uFogColor;\nuniform vec4 uFogParms;\n#endif\n\n#if defined(IS_LIT) && !defined(FIXED_QUADS)\nvarying vec4 vNormal;\n#endif\n\n#if NCLIPPLANES > 0\nuniform vec4 vClipplane[NCLIPPLANES];\n#endif\n\n#if NLIGHTS > 0\nuniform mat4 mvMatrix;\n#endif\n\n#ifdef IS_LIT\nuniform vec3 emission;\nuniform float shininess;\n#if NLIGHTS > 0\nuniform vec3 ambient[NLIGHTS];\nuniform vec3 specular[NLIGHTS]; // light*material\nuniform vec3 diffuse[NLIGHTS];\nuniform vec3 lightDir[NLIGHTS];\nuniform bool viewpoint[NLIGHTS];\nuniform bool finite[NLIGHTS];\n#endif\n#endif // IS_LIT\n\n#ifdef IS_TWOSIDED\nuniform bool front;\nvarying float normz;\n#endif\n\n#ifdef FAT_LINES\nvarying vec2 vPoint;\nvarying float vLength;\n#endif\n\nvoid main(void) {\n  vec4 fragColor;\n#ifdef FAT_LINES\n  vec2 point = vPoint;\n  bool neg = point.y < 0.0;\n  point.y = neg ? (point.y + vLength)/(1.0 - vLength) :\n                 -(point.y - vLength)/(1.0 - vLength);\n#if defined(IS_TRANSPARENT) && defined(IS_LINESTRIP)\n  if (neg && length(point) <= 1.0) discard;\n#endif\n  point.y = min(point.y, 0.0);\n  if (length(point) > 1.0) discard;\n#endif // FAT_LINES\n  \n#ifdef ROUND_POINTS\n  vec2 coord = gl_PointCoord - vec2(0.5);\n  if (length(coord) > 0.5) discard;\n#endif\n  \n#if NCLIPPLANES > 0\n  for (int i = 0; i < NCLIPPLANES; i++)\n    if (dot(vPosition, vClipplane[i]) < 0.0) discard;\n#endif\n    \n#ifdef FIXED_QUADS\n    vec3 n = vec3(0., 0., 1.);\n#elif defined(IS_LIT)\n    vec3 n = normalize(vNormal.xyz);\n#endif\n    \n#ifdef IS_TWOSIDED\n    if ((normz <= 0.) != front) discard;\n#endif\n    \n#ifdef IS_LIT\n    vec3 eye = normalize(-vPosition.xyz/vPosition.w);\n    vec3 lightdir;\n    vec4 colDiff;\n    vec3 halfVec;\n    vec4 lighteffect = vec4(emission, 0.);\n    vec3 col;\n    float nDotL;\n#ifdef FIXED_QUADS\n    n = -faceforward(n, n, eye);\n#endif\n    \n#if NLIGHTS > 0\n    for (int i=0;i<NLIGHTS;i++) {\n      colDiff = vec4(vCol.rgb * diffuse[i], vCol.a);\n      lightdir = lightDir[i];\n      if (!viewpoint[i])\n        lightdir = (mvMatrix * vec4(lightdir, 1.)).xyz;\n      if (!finite[i]) {\n        halfVec = normalize(lightdir + eye);\n      } else {\n        lightdir = normalize(lightdir - vPosition.xyz/vPosition.w);\n        halfVec = normalize(lightdir + eye);\n      }\n      col = ambient[i];\n      nDotL = dot(n, lightdir);\n      col = col + max(nDotL, 0.) * colDiff.rgb;\n      col = col + pow(max(dot(halfVec, n), 0.), shininess) * specular[i];\n      lighteffect = lighteffect + vec4(col, colDiff.a);\n    }\n#endif\n    \n#else // not IS_LIT\n    vec4 colDiff = vCol;\n    vec4 lighteffect = colDiff;\n#endif\n    \n#ifdef IS_TEXT\n    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);\n#endif\n    \n#ifdef HAS_TEXTURE\n#ifdef TEXTURE_rgb\n    vec4 textureColor = lighteffect*vec4(texture2D(uSampler, vTexcoord).rgb, 1.);\n#endif\n    \n#ifdef TEXTURE_rgba\n    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);\n#endif\n    \n#ifdef TEXTURE_alpha\n    vec4 textureColor = texture2D(uSampler, vTexcoord);\n    float luminance = dot(vec3(1.,1.,1.), textureColor.rgb)/3.;\n    textureColor =  vec4(lighteffect.rgb, lighteffect.a*luminance);\n#endif\n    \n#ifdef TEXTURE_luminance\n    vec4 textureColor = vec4(lighteffect.rgb*dot(texture2D(uSampler, vTexcoord).rgb, vec3(1.,1.,1.))/3., lighteffect.a);\n#endif\n    \n#ifdef TEXTURE_luminance_alpha\n    vec4 textureColor = texture2D(uSampler, vTexcoord);\n    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n    textureColor = vec4(lighteffect.rgb*luminance, lighteffect.a*textureColor.a);\n#endif\n    \n    fragColor = textureColor;\n\n#elif defined(IS_TEXT)\n    if (textureColor.a < 0.1)\n      discard;\n    else\n      fragColor = textureColor;\n#else\n    fragColor = lighteffect;\n#endif // HAS_TEXTURE\n    \n#ifdef HAS_FOG\n    // uFogParms elements: x = near, y = far, z = fogscale, w = (1-sin(FOV/2))/(1+sin(FOV/2))\n    // In Exp and Exp2: use density = density/far\n    // fogF will be the proportion of fog\n    // Initialize it to the linear value\n    float fogF;\n    if (uFogMode > 0) {\n      fogF = (uFogParms.y - vPosition.z/vPosition.w)/(uFogParms.y - uFogParms.x);\n      if (uFogMode > 1)\n        fogF = mix(uFogParms.w, 1.0, fogF);\n      fogF = fogF*uFogParms.z;\n      if (uFogMode == 2)\n        fogF = 1.0 - exp(-fogF);\n      // Docs are wrong: use (density*c)^2, not density*c^2\n      // https://gitlab.freedesktop.org/mesa/mesa/-/blob/master/src/mesa/swrast/s_fog.c#L58\n      else if (uFogMode == 3)\n        fogF = 1.0 - exp(-fogF*fogF);\n      fogF = clamp(fogF, 0.0, 1.0);\n      gl_FragColor = vec4(mix(fragColor.rgb, uFogColor, fogF), fragColor.a);\n    } else gl_FragColor = fragColor;\n#else\n    gl_FragColor = fragColor;\n#endif // HAS_FOG\n    \n}","players":[],"webGLoptions":{"preserveDrawingBuffer":true}},"evals":[],"jsHooks":[]}</script>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" tabindex="-1"></a><span class="fu">plotEqn3d</span>(A,b, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">4</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">4</span>))</span></code></pre></div>
+<div id="rgl15879" style="width:288px;height:288px;" class="rglWebGL html-widget" role="img" aria-labelledby="rgl15879-aria"></div>
+<script type="application/json" data-for="rgl15879">{"x":{"material":{"color":"#000000","alpha":1,"lit":true,"ambient":"#000000","specular":"#FFFFFF","emission":"#000000","shininess":50,"smooth":true,"front":"filled","back":"filled","size":3,"lwd":1,"fog":true,"point_antialias":false,"line_antialias":false,"texture":null,"textype":"rgb","texmode":"modulate","texmipmap":false,"texminfilter":"linear","texmagfilter":"linear","texenvmap":false,"depth_mask":true,"depth_test":"less","isTransparent":false,"polygon_offset":[0,0],"margin":"","floating":false,"tag":"","blend":["src_alpha","one_minus_src_alpha"]},"rootSubscene":7,"objects":{"31":{"id":31,"type":"clipplanes","offsets":[[-0],[4],[-0],[4],[3],[3]],"normals":"0","flags":512},"32":{"id":32,"type":"lines","material":{"lit":false},"vertices":"1","colors":"2","centers":"3","ignoreExtent":false,"flags":32832},"33":{"id":33,"type":"lines","material":{"lit":false},"vertices":"4","colors":"5","centers":"6","ignoreExtent":false,"flags":32832},"35":{"id":35,"type":"text","material":{"lit":false,"margin":0,"floating":true,"edge":[0,1,1]},"vertices":"7","colors":"8","texts":[["x1"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"9","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"36":{"id":36,"type":"text","material":{"lit":false,"margin":1,"floating":true,"edge":[1,1,1]},"vertices":"10","colors":"11","texts":[["x2"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"12","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"37":{"id":37,"type":"text","material":{"lit":false,"margin":2,"floating":true,"edge":[1,1,1]},"vertices":"13","colors":"14","texts":[["x3"]],"cex":[[1]],"adj":[[0.5,0.5,0.5]],"centers":"15","family":[["sans"]],"font":[[1]],"ignoreExtent":true,"flags":33808},"38":{"id":38,"type":"planes","material":{"alpha":[0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108,0.8980392217636108],"lit":false,"isTransparent":true},"vertices":"16","colors":"18","offsets":[[-8],[11],[3]],"centers":"19","normals":"17","ignoreExtent":true,"flags":32802},"39":{"id":39,"type":"spheres","material":{},"vertices":"20","colors":"21","radii":[[0.2000000029802322]],"centers":"22","ignoreExtent":false,"fastTransparency":true,"flags":32771},"11":{"id":11,"type":"light","vertices":[[0,0,1]],"colors":[[1,1,1,1],[1,1,1,1],[1,1,1,1]],"viewpoint":true,"finite":false},"12":{"id":12,"type":"background","material":{"lit":false,"back":"lines"},"colors":"23","centers":"24","sphere":false,"fogtype":"none","fogscale":1,"flags":32768},"34":{"id":34,"type":"bboxdeco","material":{"front":"lines","back":"lines"},"vertices":"25","colors":"26","axes":{"mode":["pretty","pretty","pretty"],"step":[1,1,1],"nticks":[5,5,5],"marklen":[15,15,15],"expand":[1.029999971389771,1.029999971389771,1.029999971389771]},"draw_front":true,"flags":32769},"30":{"id":30,"type":"subscene","par3d":{"antialias":8,"FOV":30,"ignoreExtent":false,"listeners":7,"mouseMode":{"none":"none","left":"trackball","right":"zoom","middle":"fov","wheel":"pull"},"observer":[0,0,20.17857933044434],"modelMatrix":[[1.190238118171692,0,0,-2.380476236343384],[0,0.4070854187011719,0.7456386089324951,-0.8141708374023438],[0,-1.118457913398743,0.2713902592658997,-17.94166374206543],[0,0,0,1]],"projMatrix":[[3.732050657272339,0,0,0],[0,3.732050657272339,0,0],[0,0,-3.863703012466431,-72.74143981933594],[0,0,-1,0]],"skipRedraw":false,"userMatrix":[[1,0,0,0],[0,0.3420201433256682,0.9396926207859085,0],[0,-0.9396926207859085,0.3420201433256682,0],[0,0,0,1]],"userProjection":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"scale":[1.190238118171692,1.190238118171692,0.7934920191764832],"viewport":{"x":0,"y":0,"width":1,"height":1},"zoom":1,"bbox":[1,3,1,3,1,3],"windowRect":[242,265,498,521],"family":"sans","font":1,"cex":1,"useFreeType":false,"fontname":"TT Arial","maxClipPlanes":8,"glVersion":4.6,"activeSubscene":0},"embeddings":{"viewport":"inherit","projection":"inherit","model":"inherit","mouse":"inherit"},"objects":[31,32,11],"parent":7,"subscenes":[],"flags":33600},"7":{"id":7,"type":"subscene","par3d":{"antialias":8,"FOV":30,"ignoreExtent":false,"listeners":7,"mouseMode":{"none":"none","left":"trackball","right":"zoom","middle":"fov","wheel":"pull"},"observer":[0,0,20.17857933044434],"modelMatrix":[[1.190238118171692,0,0,-2.380476236343384],[0,0.4070854187011719,0.7456386089324951,-0.8141708374023438],[0,-1.118457913398743,0.2713902592658997,-17.94166374206543],[0,0,0,1]],"projMatrix":[[3.732050657272339,0,0,0],[0,3.732050657272339,0,0],[0,0,-3.863703012466431,-72.74143981933594],[0,0,-1,0]],"skipRedraw":false,"userMatrix":[[1,0,0,0],[0,0.3420201433256682,0.9396926207859085,0],[0,-0.9396926207859085,0.3420201433256682,0],[0,0,0,1]],"userProjection":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"scale":[1.190238118171692,1.190238118171692,0.7934920191764832],"viewport":{"x":0,"y":0,"width":1,"height":1},"zoom":1,"bbox":[0,4,0,4,-3,3],"windowRect":[242,265,498,521],"family":"sans","font":1,"cex":1,"useFreeType":false,"fontname":"TT Arial","maxClipPlanes":8,"glVersion":4.6,"activeSubscene":0},"embeddings":{"viewport":"replace","projection":"replace","model":"replace","mouse":"replace"},"objects":[12,34,33,35,36,37,38,39,11,30],"subscenes":30,"flags":34675}},"crosstalk":{"key":[],"group":[],"id":[],"options":[]},"width":288,"height":288,"buffer":{"accessors":[{"bufferView":0,"componentType":5120,"count":6,"type":"VEC3"},{"bufferView":1,"componentType":5121,"count":4,"type":"VEC3"},{"bufferView":2,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":3,"componentType":5121,"count":2,"type":"VEC3"},{"bufferView":4,"componentType":5120,"count":4,"type":"VEC3"},{"bufferView":5,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":6,"componentType":5120,"count":2,"type":"VEC3"},{"bufferView":7,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":8,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":9,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":10,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":11,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":12,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":13,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":14,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":15,"componentType":5126,"count":1,"type":"VEC3"},{"bufferView":16,"componentType":5126,"count":3,"type":"VEC3"},{"bufferView":17,"componentType":5120,"count":3,"type":"VEC3"},{"bufferView":18,"componentType":5121,"count":36,"type":"VEC4","normalized":true},{"bufferView":19,"componentType":5126,"count":12,"type":"VEC3"},{"bufferView":20,"componentType":5120,"count":1,"type":"VEC3"},{"bufferView":21,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":22,"componentType":5120,"count":1,"type":"VEC3"},{"bufferView":23,"componentType":5121,"count":1,"type":"VEC4"},{"bufferView":24,"componentType":5121,"count":1,"type":"VEC3"},{"bufferView":25,"componentType":5126,"count":17,"type":"VEC3"},{"bufferView":26,"componentType":5121,"count":1,"type":"VEC4"}],"bufferViews":[{"buffer":0,"byteLength":18,"byteOffset":0},{"buffer":0,"byteLength":12,"byteOffset":18},{"buffer":0,"byteLength":4,"byteOffset":30},{"buffer":0,"byteLength":6,"byteOffset":34},{"buffer":0,"byteLength":12,"byteOffset":40},{"buffer":0,"byteLength":4,"byteOffset":52},{"buffer":0,"byteLength":6,"byteOffset":56},{"buffer":0,"byteLength":12,"byteOffset":64},{"buffer":0,"byteLength":4,"byteOffset":76},{"buffer":0,"byteLength":12,"byteOffset":80},{"buffer":0,"byteLength":12,"byteOffset":92},{"buffer":0,"byteLength":4,"byteOffset":104},{"buffer":0,"byteLength":12,"byteOffset":108},{"buffer":0,"byteLength":12,"byteOffset":120},{"buffer":0,"byteLength":4,"byteOffset":132},{"buffer":0,"byteLength":12,"byteOffset":136},{"buffer":0,"byteLength":36,"byteOffset":148},{"buffer":0,"byteLength":9,"byteOffset":184},{"buffer":0,"byteLength":144,"byteOffset":193},{"buffer":0,"byteLength":144,"byteOffset":340},{"buffer":0,"byteLength":3,"byteOffset":484},{"buffer":0,"byteLength":4,"byteOffset":487},{"buffer":0,"byteLength":3,"byteOffset":491},{"buffer":0,"byteLength":4,"byteOffset":494},{"buffer":0,"byteLength":3,"byteOffset":498},{"buffer":0,"byteLength":204,"byteOffset":504},{"buffer":0,"byteLength":4,"byteOffset":708}],"buffers":[{"byteLength":712,"bytes":"AQAA/wAAAAEAAP8AAAABAAD/AQEBAQEBAwMDAwMDAAAAAQEBAQMDAwAA/QAA/QQEAwQEAwAA\nAAEAAP0EBAMAAAAAwH8AAIBAAACAPwAAAAEAAMB/AACAQAAAgD8AAMB/AACAQAAAgD8AAAAB\nAADAfwAAgEAAAIA/AADAfwAAgEAAAIA/AAAAAQAAwH8AAIBAAACAPwAAgEAAAAAAAAAAAAAA\nYEAAAIBAAABAQAAAgEAAAEBAAABAQAIB//3/Av4BAt9Ta+XfU2vl31Nr5d9Ta+XfU2vl31Nr\n5d9Ta+XfU2vl31Nr5d9Ta+XfU2vl31Nr5WHQT+Vh0E/lYdBP5WHQT+Vh0E/lYdBP5WHQT+Vh\n0E/lYdBP5WHQT+Vh0E/lYdBP5SKX5uUil+blIpfm5SKX5uUil+blIpfm5SKX5uUil+blIpfm\n5SKX5uUil+blIpfm5QAAAFZVdUBWVRVAAAAAQKuqKkCrqipAAAAAAFZVFUCrqqo/AAAAwAAA\nwH8AAMB/AADAfxzHMUCrqipAAAAAAAAAAECrqqo/q6rqvwAAwH8AAMB/AADAfwAAwH8AAMB/\nAADAf6uqKkCrqqo/AAAAPwAAwD+rqipAq6qqv6uqKj5WVRVAAAAgwAAAwH8AAMB/AADAfwID\n/wAAAAECA/8BAQEBAAAAAAAAAAAAAAAAwH8AAMB/AACAPwAAwH8AAMB/AAAAQAAAwH8AAMB/\nAABAQAAAwH8AAMB/AACAQAAAwH8AAMB/AADAfwAAAAAAAMB/AADAfwAAgD8AAMB/AADAfwAA\nAEAAAMB/AADAfwAAQEAAAMB/AADAfwAAgEAAAMB/AADAfwAAwH8AAEDAAADAfwAAwH8AAADA\nAADAfwAAwH8AAIC/AADAfwAAwH8AAAAAAADAfwAAwH8AAIA/AADAfwAAwH8AAABAAADAfwAA\nwH8AAEBAAAAAAQ=="}]},"context":{"shiny":false,"rmarkdown":"rmarkdown::html_vignette"},"vertexShader":"#line 2 1\n// File 1 is the vertex shader\n#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n#endif\n\nattribute vec3 aPos;\nattribute vec4 aCol;\nuniform mat4 mvMatrix;\nuniform mat4 prMatrix;\nvarying vec4 vCol;\nvarying vec4 vPosition;\n\n#ifdef NEEDS_VNORMAL\nattribute vec3 aNorm;\nuniform mat4 normMatrix;\nvarying vec4 vNormal;\n#endif\n\n#if defined(HAS_TEXTURE) || defined (IS_TEXT)\nattribute vec2 aTexcoord;\nvarying vec2 vTexcoord;\n#endif\n\n#ifdef FIXED_SIZE\nuniform vec3 textScale;\n#endif\n\n#ifdef FIXED_QUADS\nattribute vec3 aOfs;\n#endif\n\n#ifdef IS_TWOSIDED\n#ifdef HAS_NORMALS\nvarying float normz;\nuniform mat4 invPrMatrix;\n#else\nattribute vec3 aPos1;\nattribute vec3 aPos2;\nvarying float normz;\n#endif\n#endif // IS_TWOSIDED\n\n#ifdef FAT_LINES\nattribute vec3 aNext;\nattribute vec2 aPoint;\nvarying vec2 vPoint;\nvarying float vLength;\nuniform float uAspect;\nuniform float uLwd;\n#endif\n\n#ifdef USE_ENVMAP\nvarying vec3 vReflection;\n#endif\n\nvoid main(void) {\n  \n#ifndef IS_BRUSH\n#if defined(NCLIPPLANES) || !defined(FIXED_QUADS) || defined(HAS_FOG) || defined(USE_ENVMAP)\n  vPosition = mvMatrix * vec4(aPos, 1.);\n#endif\n  \n#ifndef FIXED_QUADS\n  gl_Position = prMatrix * vPosition;\n#endif\n#endif // !IS_BRUSH\n  \n#ifdef IS_POINTS\n  gl_PointSize = POINTSIZE;\n#endif\n  \n  vCol = aCol;\n  \n// USE_ENVMAP implies NEEDS_VNORMAL\n\n#ifdef NEEDS_VNORMAL\n  vNormal = normMatrix * vec4(-aNorm, dot(aNorm, aPos));\n#endif\n\n#ifdef USE_ENVMAP\n  vReflection = normalize(reflect(vPosition.xyz/vPosition.w, \n                        normalize(vNormal.xyz/vNormal.w)));\n#endif\n  \n#ifdef IS_TWOSIDED\n#ifdef HAS_NORMALS\n  /* normz should be calculated *after* projection */\n  normz = (invPrMatrix*vNormal).z;\n#else\n  vec4 pos1 = prMatrix*(mvMatrix*vec4(aPos1, 1.));\n  pos1 = pos1/pos1.w - gl_Position/gl_Position.w;\n  vec4 pos2 = prMatrix*(mvMatrix*vec4(aPos2, 1.));\n  pos2 = pos2/pos2.w - gl_Position/gl_Position.w;\n  normz = pos1.x*pos2.y - pos1.y*pos2.x;\n#endif\n#endif // IS_TWOSIDED\n  \n#ifdef NEEDS_VNORMAL\n  vNormal = vec4(normalize(vNormal.xyz), 1);\n#endif\n  \n#if defined(HAS_TEXTURE) || defined(IS_TEXT)\n  vTexcoord = aTexcoord;\n#endif\n  \n#if defined(FIXED_SIZE) && !defined(ROTATING)\n  vec4 pos = prMatrix * mvMatrix * vec4(aPos, 1.);\n  pos = pos/pos.w;\n  gl_Position = pos + vec4(aOfs*textScale, 0.);\n#endif\n  \n#if defined(IS_SPRITES) && !defined(FIXED_SIZE)\n  vec4 pos = mvMatrix * vec4(aPos, 1.);\n  pos = pos/pos.w + vec4(aOfs,  0.);\n  gl_Position = prMatrix*pos;\n#endif\n  \n#ifdef FAT_LINES\n  /* This code was inspired by Matt Deslauriers' code in \n   https://mattdesl.svbtle.com/drawing-lines-is-hard */\n  vec2 aspectVec = vec2(uAspect, 1.0);\n  mat4 projViewModel = prMatrix * mvMatrix;\n  vec4 currentProjected = projViewModel * vec4(aPos, 1.0);\n  currentProjected = currentProjected/currentProjected.w;\n  vec4 nextProjected = projViewModel * vec4(aNext, 1.0);\n  vec2 currentScreen = currentProjected.xy * aspectVec;\n  vec2 nextScreen = (nextProjected.xy / nextProjected.w) * aspectVec;\n  float len = uLwd;\n  vec2 dir = vec2(1.0, 0.0);\n  vPoint = aPoint;\n  vLength = length(nextScreen - currentScreen)/2.0;\n  vLength = vLength/(vLength + len);\n  if (vLength > 0.0) {\n    dir = normalize(nextScreen - currentScreen);\n  }\n  vec2 normal = vec2(-dir.y, dir.x);\n  dir.x /= uAspect;\n  normal.x /= uAspect;\n  vec4 offset = vec4(len*(normal*aPoint.x*aPoint.y - dir), 0.0, 0.0);\n  gl_Position = currentProjected + offset;\n#endif\n  \n#ifdef IS_BRUSH\n  gl_Position = vec4(aPos, 1.);\n#endif\n}","fragmentShader":"#line 2 2\n// File 2 is the fragment shader\n#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n#endif\nvarying vec4 vCol; // carries alpha\nvarying vec4 vPosition;\n#if defined(HAS_TEXTURE) || defined (IS_TEXT)\nvarying vec2 vTexcoord;\nuniform sampler2D uSampler;\n#endif\n\n#ifdef HAS_FOG\nuniform int uFogMode;\nuniform vec3 uFogColor;\nuniform vec4 uFogParms;\n#endif\n\n#if defined(IS_LIT) && !defined(FIXED_QUADS)\nvarying vec4 vNormal;\n#endif\n\n#if NCLIPPLANES > 0\nuniform vec4 vClipplane[NCLIPPLANES];\n#endif\n\n#if NLIGHTS > 0\nuniform mat4 mvMatrix;\n#endif\n\n#ifdef IS_LIT\nuniform vec3 emission;\nuniform float shininess;\n#if NLIGHTS > 0\nuniform vec3 ambient[NLIGHTS];\nuniform vec3 specular[NLIGHTS]; // light*material\nuniform vec3 diffuse[NLIGHTS];\nuniform vec3 lightDir[NLIGHTS];\nuniform bool viewpoint[NLIGHTS];\nuniform bool finite[NLIGHTS];\n#endif\n#endif // IS_LIT\n\n#ifdef IS_TWOSIDED\nuniform bool front;\nvarying float normz;\n#endif\n\n#ifdef FAT_LINES\nvarying vec2 vPoint;\nvarying float vLength;\n#endif\n\n#ifdef USE_ENVMAP\nvarying vec3 vReflection;\n#endif\n\nvoid main(void) {\n  vec4 fragColor;\n#ifdef FAT_LINES\n  vec2 point = vPoint;\n  bool neg = point.y < 0.0;\n  point.y = neg ? (point.y + vLength)/(1.0 - vLength) :\n                 -(point.y - vLength)/(1.0 - vLength);\n#if defined(IS_TRANSPARENT) && defined(IS_LINESTRIP)\n  if (neg && length(point) <= 1.0) discard;\n#endif\n  point.y = min(point.y, 0.0);\n  if (length(point) > 1.0) discard;\n#endif // FAT_LINES\n  \n#ifdef ROUND_POINTS\n  vec2 coord = gl_PointCoord - vec2(0.5);\n  if (length(coord) > 0.5) discard;\n#endif\n  \n#if NCLIPPLANES > 0\n  for (int i = 0; i < NCLIPPLANES; i++)\n    if (dot(vPosition, vClipplane[i]) < 0.0) discard;\n#endif\n    \n#ifdef FIXED_QUADS\n    vec3 n = vec3(0., 0., 1.);\n#elif defined(IS_LIT)\n    vec3 n = normalize(vNormal.xyz);\n#endif\n    \n#ifdef IS_TWOSIDED\n    if ((normz <= 0.) != front) discard;\n#endif\n\n#ifdef IS_LIT\n    vec3 eye = normalize(-vPosition.xyz/vPosition.w);\n    vec3 lightdir;\n    vec4 colDiff;\n    vec3 halfVec;\n    vec4 lighteffect = vec4(emission, 0.);\n    vec3 col;\n    float nDotL;\n#ifdef FIXED_QUADS\n    n = -faceforward(n, n, eye);\n#endif\n    \n#if NLIGHTS > 0\n    // Simulate two-sided lighting\n    if (n.z < 0.0)\n      n = -n;\n    for (int i=0;i<NLIGHTS;i++) {\n      colDiff = vec4(vCol.rgb * diffuse[i], vCol.a);\n      lightdir = lightDir[i];\n      if (!viewpoint[i]) {\n        if (finite[i]) {\n          lightdir = (mvMatrix * vec4(lightdir, 1.)).xyz;\n        } else {\n          lightdir = (mvMatrix * vec4(lightdir, 0.)).xyz;\n        }\n      }\n      if (!finite[i]) {\n        halfVec = normalize(lightdir + eye);\n      } else {\n        lightdir = normalize(lightdir - vPosition.xyz/vPosition.w);\n        halfVec = normalize(lightdir + eye);\n      }\n      col = ambient[i];\n      nDotL = dot(n, lightdir);\n      col = col + max(nDotL, 0.) * colDiff.rgb;\n      col = col + pow(max(dot(halfVec, n), 0.), shininess) * specular[i];\n      lighteffect = lighteffect + vec4(col, colDiff.a);\n    }\n#endif\n    \n#else // not IS_LIT\n    vec4 colDiff = vCol;\n    vec4 lighteffect = colDiff;\n#endif\n    \n#ifdef IS_TEXT\n    vec4 textureColor = lighteffect*texture2D(uSampler, vTexcoord);\n#endif\n    \n#ifdef HAS_TEXTURE\n\n// These calculations use the definitions from \n// https://docs.gl/gl3/glTexEnv\n\n#ifdef USE_ENVMAP\n    float m = 2.0 * sqrt(dot(vReflection, vReflection) + 2.0*vReflection.z + 1.0);\n    vec4 textureColor = texture2D(uSampler, vReflection.xy / m + vec2(0.5, 0.5));\n#else\n    vec4 textureColor = texture2D(uSampler, vTexcoord);\n#endif\n\n#ifdef TEXTURE_rgb\n\n#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n    textureColor = vec4(textureColor.rgb, lighteffect.a);\n#endif \n\n#ifdef TEXMODE_modulate\n    textureColor = lighteffect*vec4(textureColor.rgb, 1.);\n#endif\n\n#ifdef TEXMODE_blend\n    textureColor = vec4((1. - textureColor.rgb) * lighteffect.rgb, lighteffect.a);\n#endif\n\n#ifdef TEXMODE_add\n    textureColor = vec4(lighteffect.rgb + textureColor.rgb, lighteffect.a);\n#endif\n\n#endif //TEXTURE_rgb\n        \n#ifdef TEXTURE_rgba\n\n#ifdef TEXMODE_replace\n// already done\n#endif \n\n#ifdef TEXMODE_modulate\n    textureColor = lighteffect*textureColor;\n#endif\n\n#ifdef TEXMODE_decal\n    textureColor = vec4((1. - textureColor.a)*lighteffect.rgb) +\n                     textureColor.a*textureColor.rgb, \n                     lighteffect.a);\n#endif\n\n#ifdef TEXMODE_blend\n    textureColor = vec4((1. - textureColor.rgb) * lighteffect.rgb,\n                    lighteffect.a*textureColor.a);\n#endif\n\n#ifdef TEXMODE_add\n    textureColor = vec4(lighteffect.rgb + textureColor.rgb,\n                    lighteffect.a*textureColor.a);\n#endif\n    \n#endif //TEXTURE_rgba\n    \n#ifdef TEXTURE_alpha\n    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n\n#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n    textureColor = vec4(lighteffect.rgb, luminance);\n#endif \n\n#if defined(TEXMODE_modulate) || defined(TEXMODE_blend) || defined(TEXMODE_add)\n    textureColor = vec4(lighteffect.rgb, lighteffect.a*luminance);\n#endif\n \n#endif // TEXTURE_alpha\n    \n// The TEXTURE_luminance values are not from that reference    \n#ifdef TEXTURE_luminance\n    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n\n#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n    textureColor = vec4(luminance, luminance, luminance, lighteffect.a);\n#endif \n\n#ifdef TEXMODE_modulate\n    textureColor = vec4(luminance*lighteffect.rgb, lighteffect.a);\n#endif\n\n#ifdef TEXMODE_blend\n    textureColor = vec4((1. - luminance)*lighteffect.rgb,\n                        lighteffect.a);\n#endif\n\n#ifdef TEXMODE_add\n    textureColor = vec4(luminance + lighteffect.rgb, lighteffect.a);\n#endif\n\n#endif // TEXTURE_luminance\n \n    \n#ifdef TEXTURE_luminance_alpha\n    float luminance = dot(vec3(1.,1.,1.),textureColor.rgb)/3.;\n\n#if defined(TEXMODE_replace) || defined(TEXMODE_decal)\n    textureColor = vec4(luminance, luminance, luminance, textureColor.a);\n#endif \n\n#ifdef TEXMODE_modulate\n    textureColor = vec4(luminance*lighteffect.rgb, \n                        textureColor.a*lighteffect.a);\n#endif\n\n#ifdef TEXMODE_blend\n    textureColor = vec4((1. - luminance)*lighteffect.rgb,\n                        textureColor.a*lighteffect.a);\n#endif\n\n#ifdef TEXMODE_add\n    textureColor = vec4(luminance + lighteffect.rgb, \n                        textureColor.a*lighteffect.a);\n\n#endif\n\n#endif // TEXTURE_luminance_alpha\n    \n    fragColor = textureColor;\n\n#elif defined(IS_TEXT)\n    if (textureColor.a < 0.1)\n      discard;\n    else\n      fragColor = textureColor;\n#else\n    fragColor = lighteffect;\n#endif // HAS_TEXTURE\n    \n#ifdef HAS_FOG\n    // uFogParms elements: x = near, y = far, z = fogscale, w = (1-sin(FOV/2))/(1+sin(FOV/2))\n    // In Exp and Exp2: use density = density/far\n    // fogF will be the proportion of fog\n    // Initialize it to the linear value\n    float fogF;\n    if (uFogMode > 0) {\n      fogF = (uFogParms.y - vPosition.z/vPosition.w)/(uFogParms.y - uFogParms.x);\n      if (uFogMode > 1)\n        fogF = mix(uFogParms.w, 1.0, fogF);\n      fogF = fogF*uFogParms.z;\n      if (uFogMode == 2)\n        fogF = 1.0 - exp(-fogF);\n      // Docs are wrong: use (density*c)^2, not density*c^2\n      // https://gitlab.freedesktop.org/mesa/mesa/-/blob/master/src/mesa/swrast/s_fog.c#L58\n      else if (uFogMode == 3)\n        fogF = 1.0 - exp(-fogF*fogF);\n      fogF = clamp(fogF, 0.0, 1.0);\n      gl_FragColor = vec4(mix(fragColor.rgb, uFogColor, fogF), fragColor.a);\n    } else gl_FragColor = fragColor;\n#else\n    gl_FragColor = fragColor;\n#endif // HAS_FOG\n    \n}","players":[],"webGLoptions":{"preserveDrawingBuffer":true}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="three-inconsistent-equations-1" class="section level3">
 <h3>Three inconsistent equations</h3>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,  <span class="dv">3</span>, <span class="dv">1</span>,</span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>              <span class="dv">1</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="sc">-</span><span class="dv">2</span>,</span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>              <span class="dv">2</span>,  <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="at">byrow=</span><span class="cn">TRUE</span>)</span>
-<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&#39;x&#39;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)</span>
-<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">6</span>)</span>
-<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>,  <span class="dv">3</span>, <span class="dv">1</span>,</span>
+<span id="cb54-2"><a href="#cb54-2" tabindex="-1"></a>              <span class="dv">1</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="sc">-</span><span class="dv">2</span>,</span>
+<span id="cb54-3"><a href="#cb54-3" tabindex="-1"></a>              <span class="dv">2</span>,  <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="dv">3</span>, <span class="dv">3</span>, <span class="at">byrow=</span><span class="cn">TRUE</span>)</span>
+<span id="cb54-4"><a href="#cb54-4" tabindex="-1"></a><span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&#39;x&#39;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)</span>
+<span id="cb54-5"><a href="#cb54-5" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">6</span>)</span>
+<span id="cb54-6"><a href="#cb54-6" tabindex="-1"></a><span class="fu">showEqn</span>(A, b)</span></code></pre></div>
 <pre><code>## 1*x1 + 3*x2 + 1*x3  =  2 
 ## 1*x1 - 2*x2 - 2*x3  =  3 
 ## 2*x1 + 1*x2 - 1*x3  =  6</code></pre>
 <p>Are the equations consistent? No.</p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a><span class="fu">c</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )          <span class="co"># show ranks</span></span></code></pre></div>
 <pre><code>## [1] 2 3</code></pre>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="fu">all.equal</span>( <span class="fu">R</span>(A), <span class="fu">R</span>(<span class="fu">cbind</span>(A,b)) )  <span class="co"># consistent?</span></span></code></pre></div>
 <pre><code>## [1] &quot;Mean relative difference: 0.5&quot;</code></pre>
 </div>
 </div>
