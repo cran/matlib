@@ -1,5 +1,6 @@
-#' Convert matrix to LaTeX equation
+#' (Deprecated) Convert matrix to LaTeX equation
 #'
+#' (This function has been deprecated; see \code{\link{latexMatrix}} instead).
 #' This function provides a soft-wrapper to \code{xtable::xtableMatharray()} with additional support for
 #' \code{fractions} output and \code{brackets}.
 #'
@@ -8,7 +9,8 @@
 #' \code{\\pmatrix{}}, \code{\\bmatrix{}}, \code{\\Bmatrix{}}, ... .
 #'
 #'
-#' @param x a matrix
+#' @param x a numeric or character matrix. If the latter a numeric-based arguments will
+#'   be ignored
 #' @param fractions logical; if \code{TRUE}, try to express non-integers as rational numbers, using the \code{\link[MASS]{fractions}}
 #'    function; if you require greater accuracy, you can set the \code{cycles} (default 10)
 #'    and/or \code{max.denominator} (default 2000) arguments to \code{fractions} as a global option, e.g.,
@@ -22,10 +24,12 @@
 #' @param show.size logical; if \code{TRUE} shows the size of the matrix as an appended subscript.
 #' @param digits Number of digits to display. If \code{digits == NULL} (the default), the function sets
 #'     \code{digits = 0} if the elements of \code{x} are all integers
+#' @param print  logical; print the LaTeX code for the matrix on the console?; default: \code{TRUE}
 #'
 #' @param ... additional arguments passed to \code{xtable::xtableMatharray()}
 #' @importFrom xtable xtableMatharray
 #' @importFrom dplyr case_when
+#' @importFrom utils capture.output
 #' @author Phil Chalmers
 #' @export
 #' @examples
@@ -40,16 +44,24 @@
 #'
 #' matrix2latex(A, digits=0, brackets="p", show.size = TRUE)
 #'
+#' # character matrices
+#' A <- matrix(paste0('a_', 1:9), 3, 3)
+#' matrix2latex(cbind(A,b))
+#' b <- paste0("\\beta_", 1:3)
+#' matrix2latex(cbind(A,b))
+#'
 matrix2latex <- function(x,
                          fractions = FALSE,
                          brackets = TRUE,
                          show.size = FALSE,
                          digits = NULL,
+                         print = TRUE,
                          ...){
-
-  if( is.null(digits) & all(trunc(x) == x) ) digits <- 0
+  .Deprecated("matrix2latex",
+              msg="Function is deprecated. See latexMatrix() and Eqn() for more recent approaches")
+  if( is.numeric(x) && is.null(digits) && all(trunc(x) == x) ) digits <- 0
   ret <- if (fractions) xtable::xtableMatharray(as.character(Fractions(x)), digits=digits, ...)
-    else xtable::xtableMatharray(x, digits=digits, ...)
+         else           xtable::xtableMatharray(x, digits=digits, ...)
   if (is.logical(brackets)) {
     brack = if (isTRUE(brackets)) c("[", "]") else NULL
   }
@@ -71,10 +83,14 @@ matrix2latex <- function(x,
   size <- if (show.size) paste0("_{", nrow(x), " \\times ", ncol(x), "}")
   else NULL
 
-  cat(begin)
-  print(ret)
-  cat(end)
-  cat(size, "\n")
+  output <- paste0(capture.output(
+      print(ret, sanitize.text.function = function(x){x})), collapse='\n')
+  ret <- c(begin, output, end, size)
 
-  invisible(NULL)
+  if (print) {
+      cat(ret)
+      return(invisible(""))
+  } else {
+      return(ret)
+  }
 }

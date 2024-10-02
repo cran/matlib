@@ -2,7 +2,7 @@
 % Please edit documentation in R/matrix2latex.R
 \name{matrix2latex}
 \alias{matrix2latex}
-\title{Convert matrix to LaTeX equation}
+\title{(Deprecated) Convert matrix to LaTeX equation}
 \usage{
 matrix2latex(
   x,
@@ -10,11 +10,13 @@ matrix2latex(
   brackets = TRUE,
   show.size = FALSE,
   digits = NULL,
+  print = TRUE,
   ...
 )
 }
 \arguments{
-\item{x}{a matrix}
+\item{x}{a numeric or character matrix. If the latter a numeric-based arguments will
+be ignored}
 
 \item{fractions}{logical; if \code{TRUE}, try to express non-integers as rational numbers, using the \code{\link[MASS]{fractions}}
 function; if you require greater accuracy, you can set the \code{cycles} (default 10)
@@ -33,9 +35,12 @@ around the matrix, \code{FALSE} produces no brackets. Otherwise
 \item{digits}{Number of digits to display. If \code{digits == NULL} (the default), the function sets
 \code{digits = 0} if the elements of \code{x} are all integers}
 
+\item{print}{logical; print the LaTeX code for the matrix on the console?; default: \code{TRUE}}
+
 \item{...}{additional arguments passed to \code{xtable::xtableMatharray()}}
 }
 \description{
+(This function has been deprecated; see \code{\link{latexMatrix}} instead).
 This function provides a soft-wrapper to \code{xtable::xtableMatharray()} with additional support for
 \code{fractions} output and \code{brackets}.
 }
@@ -54,6 +59,12 @@ matrix2latex(cbind(A,b), digits = 0)
 matrix2latex(cbind(A/2,b), fractions = TRUE)
 
 matrix2latex(A, digits=0, brackets="p", show.size = TRUE)
+
+# character matrices
+A <- matrix(paste0('a_', 1:9), 3, 3)
+matrix2latex(cbind(A,b))
+b <- paste0("\\\\beta_", 1:3)
+matrix2latex(cbind(A,b))
 
 }
 \author{
