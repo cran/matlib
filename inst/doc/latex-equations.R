@@ -33,11 +33,11 @@ latexMatrix("\\mathbb{q}", 3, 3,
   Eqn()
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  Eqn("\\mathbf{X} = \\mathbf{U} \\mathbf{\\Lambda} \\mathbf{V}^\\top", label='eq:svd')
-#  Eqn("\\mathbf{X} =",
-#      latexMatrix("u", "n", "k"),
-#      latexMatrix("\\lambda", "k", "k", diag=TRUE),
-#      latexMatrix("v", "k", "p", transpose = TRUE), label='eq:svdmats')
+# Eqn("\\mathbf{X} = \\mathbf{U} \\mathbf{\\Lambda} \\mathbf{V}^\\top", label='eq:svd')
+# Eqn("\\mathbf{X} =",
+#     latexMatrix("u", "n", "k"),
+#     latexMatrix("\\lambda", "k", "k", diag=TRUE),
+#     latexMatrix("v", "k", "p", transpose = TRUE), label='eq:svdmats')
 
 ## ----eqn-svd,results='asis', echo=FALSE---------------------------------------
 Eqn("\\mathbf{X} = \\mathbf{U} \\mathbf{\\Lambda} \\mathbf{V}^\\top", label='eq:svd')
@@ -58,6 +58,27 @@ Eqn("\\mathbf{X} & = \\mathbf{U} \\mathbf{\\Lambda} \\mathbf{V}^\\top",
     latexMatrix("u", "n", "k"),
     latexMatrix("\\lambda", "k", "k", diag=TRUE),
     latexMatrix("v", "k", "p", transpose = TRUE),
+    align=TRUE)
+
+## ----overset, results = 'asis'------------------------------------------------
+A <- matrix(1:4, 2, 2)
+B <- matrix(4:1, 2, 2)
+AB <- A + B
+Eqn(overset(A), "+",
+    overset(B), Eqn_hspace(mid = '='),
+    overbrace(AB, "A+B"))
+
+## ----hat-matrix, results = 'asis'---------------------------------------------
+H <- "\\mathbf{X} (\\mathbf{X}^{\\top}\\mathbf{X})^{-1} \\mathbf{X}^{\\top}"
+Eqn("\\mathbf{\\hat{y}} =", underbrace(H, "\\mathbf{H}"), "\\mathbf{y}")
+
+## ----eqn-over-under,results='asis'--------------------------------------------
+Eqn(underset("\\mathbf{X}", "(n \\times p)"), "& = \\mathbf{U} \\mathbf{\\Lambda} \\mathbf{V}^\\top",
+    Eqn_newline(),
+    ' & =',
+    underbrace(latexMatrix("u", "n", "k"), "\\mathbf{U}"),
+    overbrace(latexMatrix("\\lambda", "k", "k", diag=TRUE),"\\mathbf{\\Lambda}"),
+    underbrace(latexMatrix("v", "k", "p", transpose = TRUE), "\\mathbf{V}^\\top"),
     align=TRUE)
 
 ## ----matrix-arithmetic--------------------------------------------------------
@@ -96,7 +117,7 @@ A %*% B
 A %*% latexMatrix("b", 2, 2)
 
 ## ----multSymbol, eval=FALSE---------------------------------------------------
-#  options(latexMultSymbol = "\\times")
+# options(latexMultSymbol = "\\times")
 
 ## ----transpose----------------------------------------------------------------
 D
@@ -207,9 +228,9 @@ KAB <- kronecker(A, B)
 
 Eqn("\\mathbf{A} \\otimes \\mathbf{B} = &",
     KABmat,
-    Eqn_newline(), Eqn_vspace("1.5ex"), "= & ",
+    Eqn_newline(space = '1.5ex'), "= & ",
     KAB |> partition(rows = 2, columns = 2),
-    Eqn_newline(), Eqn_vspace("1.5ex"), "= & ",
+    Eqn_newline(space = '1.5ex'), "= & ",
     latexMatrix(as.double(KAB)) |> partition(rows = 2, columns = 2),
     align = TRUE)
 
@@ -232,7 +253,7 @@ b <- paste0("b_", 1:3)
 x <- paste0("x", 1:3)
 
 ## ----showEqn0, eval=FALSE-----------------------------------------------------
-#  showEqn(A, b, vars = x, latex=TRUE)
+# showEqn(A, b, vars = x, latex=TRUE)
 
 ## ----results='asis'-----------------------------------------------------------
 showEqn(A, b, vars = x, latex=TRUE) |> Eqn()

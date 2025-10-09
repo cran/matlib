@@ -85,9 +85,13 @@ Ncol(x, ...)
 \method{print}{latexMatrix}(
   x,
   onConsole = TRUE,
-  bordermatrix = getOption("bordermatrix"),
-  cell.spacing = getOption("cell.spacing"),
-  colname.spacing = getOption("colname.spacing"),
+  bordermatrix = getOption("print.latexMatrix")[["bordermatrix"]],
+  cell.spacing = getOption("print.latexMatrix")[["cell.spacing"]],
+  colname.spacing = getOption("print.latexMatrix")[["colname.spacing"]],
+  text.labels = getOption("print.latexMatrix")[["text.labels"]],
+  display.labels = getOption("print.latexMatrix")[["display.labels"]],
+  mathtext = getOption("print.latexMatrix")[["mathtext"]],
+  mathtext.size = getOption("print.latexMatrix")[["mathtext.size"]],
   ...
 )
 
@@ -212,16 +216,37 @@ the matrix on the R console.}
 \item{bordermatrix}{if \code{TRUE}, the LaTeX \code{"\bordermatrix"} macro
 is used for matrices with row and/or column names. This macro
 doesn't work in Markdown-based documents. The default is taken
-from the \code{"bordermatrix"} option, and if that option isn't set
+from the \code{"bordermatrix"} element of the \code{"print.latexMatrix"} option, 
+and if that option isn't set
 the argument is set to \code{FALSE}.}
 
 \item{cell.spacing}{a character whose width is used to try to even out spacing
 of printed cell elements; the default is taken from the \code{"cell.spacing"}
-option, and if that option isn't set the character \code{"e"} is used.}
+element of the \code{"print.latexMatrix"} option, and if that option isn't set the character \code{"e"} is used.}
 
 \item{colname.spacing}{a character whose width is used to try to even out spacing
 of printed column names; the default is taken from the \code{"colname.spacing"}
-option, and if that option isn't set the character \code{"i"} is used.}
+element of the \code{"print.latexMatrix"} option, and if that option isn't set the character \code{"i"} is used.}
+
+\item{text.labels}{whether to set row and column labels in text mode rather than
+math model; the default is taken from the \code{"text.labels"} element of the \code{"print.latexMatrix"} option,
+and if the option isn't set, the default is \code{c(row=FALSE, column=FALSE)}.}
+
+\item{display.labels}{whether or not to display row and column labels (if they exist);
+the default is taken from the \code{"display.labels"} element of the \code{"print.latexMatrix"} option, and if the option
+isn't set, the default is \code{TRUE}.}
+
+\item{mathtext}{a LaTeX command to display row/column label text in math mode;
+the default is taken from the \code{"mathtext"} element of the \code{"print.latexMatrix"} option, and if the
+option isn't set, the default is \code{"text"}.}
+
+\item{mathtext.size}{a LaTeX command to control the size of row/column text
+(e.g., \code{"footnotesize"}); the default is taken from the \code{"mathtext.size"} 
+element of the \code{"print.latexMatrix"} option, and if
+the option isn't set, the default is \code{""}. Note: Setting text
+size for the row and column labels only works if \code{"text"} is used
+for \code{mathtext} and if MathJax isn't used to
+render LaTeX math in an HTML document.}
 
 \item{locals}{an optional list or named numeric vector of variables to be given
 specific numeric values; e.g.,
@@ -243,14 +268,16 @@ for  \code{"Rownames<-()"} and \code{"Colnames<-()"}, a
 vector of names.}
 }
 \value{
-\code{latexMatrix()} returns an object of class \code{"latexMatrix"}
-         which contains the LaTeX representation of the matrix as a character string,
-         in the returned object are named:
+\code{latexMatrix()} returns an object of class \code{"latexMatrix"}.
+         This is a list which contains the LaTeX representation of the matrix as a character string 
+         and other information.
+         The elements in the returned object are named:
          \itemize{
          \item \code{"matrix"} (the LaTeX representation of the matrix); 
          \item \code{"dim"} (\code{nrow} and \code{ncol}); 
          \item \code{"body"} (a character matrix of LaTeX expressions for the cells of the matrix);
          \item \code{"wrapper"}(the beginning and ending lines for the LaTeX matrix environment).
+         \item \code{"dimnames"}(the rownames and colnames for the matrix, if specified)
          }
          
          \code{partition()}, \code{rbind()}, \code{cbind()}, and indexing of
@@ -263,8 +290,10 @@ the LaTeX code for matrices of various types programmatically. The objects produ
 by the function can also be manipulated, e.g., with standard arithmetic functions and operators:
 See \code{\link{latexMatrixOperations}}.
 
-The \code{latexMatrix()} function can construct the LaTeX code for a symbolic matrix, whose elements are a \code{symbol}, with row and column subscripts.
-For example:
+The \code{latexMatrix()} function can construct the LaTeX code for a symbolic matrix 
+whose elements are a \code{symbol}, like \eqn{x}, with row and column subscripts.
+For example, with no arguments, the call \code{latexMatrix()} generates this LaTeX representation
+of an \eqn{n \times m} matrix with elements \eqn{x_{ij}}.
 \preformatted{
  \\begin{pmatrix}
    x_{11}  & x_{12}  & \\dots  & x_{1m}  \\
@@ -287,18 +316,20 @@ For example:
 % \figure{man/figures/symbMat-x.png}{options: width=150 alt="LaTeX result for the symbolic n x m matrix"}.
 
 Alternatively, instead of characters,
-the number of rows and/or columns can be \bold{integers}, generating a matrix of given size.
+the number of rows and/or columns can be \bold{integers}, generating a matrix of given size,
+as in \code{latexMatrix(nrow = 2, ncol = 3)}.
 
 As well, instead of a character for the matrix \code{symbol}, you can supply a \bold{matrix} of arbitrary character
-strings (in LaTeX notation) or numbers, and these will be used as the elements of the matrix.
+strings (in LaTeX notation) or numbers, and these will be used as the elements of the matrix,
+as in \code{latexMatrix(matrix(1:6, nrow = 2, ncol = 6))}.
 
-You can print the resulting LaTeX code to the console. When the result is assigned to a variable,
+The resulting LaTeX code is printed to the console by default. When the result is assigned to a variable,
 you can send it to the clipboard using \code{\link[clipr]{write_clip}()}. Perhaps most convenient of all,
 the function can be used used in a markdown chunk in a \code{Rmd} or \code{qmd} document, e.g,
 
 \preformatted{
 ```{r results = "asis"}
-latexMatrix("\\lambda", nrow=2, ncol=2,
+latexMatrix("\\\\lambda", nrow=2, ncol=2,
                diag=TRUE)
 ```
 }
@@ -310,6 +341,11 @@ This generates
  0           & \lambda_{2} \\
  \end{pmatrix}
  }
+
+The function \code{\link{Eqn}} can be used to construct matrix equations, and in RStudio generates a preview of
+an equation in the Viewer panel.
+
+Various options control the printing of \code{"latexMatrix"} objects, described in Details.
 }
 \details{
 This implementation assumes that the LaTeX \code{amsmath} package will be available because it uses the shorthands
@@ -325,8 +361,15 @@ This implementation assumes that the LaTeX \code{amsmath} package will be availa
 You may need to use \code{extra_dependencies: ["amsmath"]} in your YAML header of a \code{Rmd} or \code{qmd} file.
 
 You can supply a numeric matrix as the \code{symbol}, but the result will not be pretty
-unless the elements are integers or are rounded. For a LaTeX representation of general numeric matrices, use
+unless the elements are integers or are rounded. You can control the number of digits
+displayed using the global option \code{options("digits")}, for example: \code{options(digits = 4)}.
+For a LaTeX representation of general numeric matrices, use
 \code{\link{matrix2latex}}.
+
+\bold{Other functions}
+
+\code{rbind()} and \code{cbind()} join \code{"latexMatrix"} objects together, and indexing,
+via \code{[ , ]} subsets rows/columns just as they do for regular matrices.
 
 The \code{partition()} function modifies (only) the printed LaTeX representation of a \code{"latexMatrix"}
 object to include partition lines by rows and/or columns.
@@ -335,8 +378,33 @@ The accessor functions \code{getLatex()}, \code{getBody()}, \code{getWrapper()},
 \code{getDim()}, \code{getNrow()}, and \code{getNcol()} may be used to retrieve
 components of the returned object.
 
-Various functions and operators for \code{"latexMatrix"} objects are
+Various arithmetic functions and operators (like \code{+}, \code{-}, matrix product \code{\%*\%}, ...)  for \code{"latexMatrix"} objects are
 documented separately; see, \code{\link{latexMatrixOperations}}.
+
+
+
+\bold{print.latexMatrix options}
+
+Some LaTeX typesetting details are controlled by the \code{"print.latexMatrix"} option,
+which can be a \bold{list} with one or more of the following elements (see the
+arguments to the \code{print.latexMatrix()} method for more information):
+\code{"bordermatrix"}, 
+\code{"cell.spacing"}, 
+\code{"colname.spacing"},
+\code{"text.labels"}, 
+\code{"display.labels"}, 
+\code{"mathtext"},
+and \code{"mathtext.size"}.
+
+Most of these have to do with the display of matrices which have row and/or column labels
+in their \code{\link[base]{dimnames}} or by being set with the \code{rownames} and \code{rownames} 
+arguments to \code{latexMatrix}.
+
+You can turn off their display using:
+
+\preformatted{options(print.latexMatrix = list(display.labels=FALSE))}
+
+and similarly you can change any other of these options.
 }
 \examples{
 latexMatrix()
@@ -433,7 +501,9 @@ Colnames(W) <- c("\\\\mathrm{Age}", "\\\\mathrm{BMI}", "\\\\mathrm{Waist}")
 W
 }
 \seealso{
-\code{\link{latexMatrixOperations}}, \code{\link{matrix2latex}},
+\code{\link{latexMatrixOperations}}, 
+ \code{\link{Eqn}},
+ \code{\link{matrix2latex}},
  \code{\link[clipr]{write_clip}}
 }
 \author{
